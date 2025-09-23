@@ -16,7 +16,13 @@
           class="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500">
           Editar
         </router-link>
-        <button @click="eliminarPaciente(p.id_paciente)" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+        <router-link :to="`/pacientes/${p.id_paciente}/archivos`"
+          class="bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600">
+          Ver Expediente📁
+        </router-link>
+
+        <button @click="eliminarPaciente(p.id_paciente)"
+          class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
           Eliminar
         </button>
       </div>
