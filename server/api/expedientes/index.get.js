@@ -11,5 +11,17 @@ export default defineEventHandler(async () => {
     .list()
 
   if (error) return { error: error.message }
-  return data
+
+  // Hacer fetch de los metadatos de la API de expedientes para ver asignaciones
+  const archivosAsignados = await $fetch('https://proyectoveterinario-2025-quantumcoders.onrender.com/api/v1/expedientes/')
+  
+  const archivosNoAsignados = data
+    .filter(file => !archivosAsignados.some(a => a.nombre_archivo === file.name))
+    .map(file => ({
+      ...file,
+      selectedPaciente: '',
+      url_publica: supabase.storage.from(process.env.BUCKET_NAME).getPublicUrl(file.name).data.publicUrl
+    }))
+
+  return archivosNoAsignados
 })

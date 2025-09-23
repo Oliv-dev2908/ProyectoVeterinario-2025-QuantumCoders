@@ -1,23 +1,14 @@
 <template>
   <div class="max-w-4xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">
-      Archivos del Paciente #{{ pacienteId }}
+      Archivos del Paciente #{{ pacienteId }} - {{ pacienteNombre }}
     </h1>
 
-    <!-- Subir archivo -->
-    <div class="mb-8 p-4 bg-white shadow rounded-lg flex flex-col sm:flex-row sm:items-center gap-4">
-      <input type="file" ref="fileInput" class="border rounded px-3 py-2 w-full sm:w-auto" />
-      <button @click="uploadFile"
-              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-        Subir Archivo
-      </button>
-    </div>
-
     <!-- Lista de archivos -->
-    <div class="bg-white shadow rounded-lg p-4">
-      <h2 class="text-xl font-semibold mb-4 text-gray-700">Archivos Subidos</h2>
+    <div class="bg-white shadow rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-gray-700">Archivos Médicos</h2>
       <ul class="divide-y divide-gray-200">
-        <li v-for="file in files" :key="file.id" class="flex justify-between items-center py-2">
+        <li v-for="file in files" :key="file.id" class="flex justify-between items-center py-3">
           <span class="text-gray-800">{{ file.nombre_archivo }}</span>
           <div class="flex gap-2">
             <a :href="file.url_publica" target="_blank"
@@ -35,7 +26,9 @@
           </div>
         </li>
       </ul>
-      <p v-if="files.length === 0" class="text-gray-400 mt-4 text-center">No hay archivos subidos aún.</p>
+      <p v-if="files.length === 0" class="text-gray-400 mt-4 text-center">
+        No hay archivos para este paciente.
+      </p>
     </div>
   </div>
 </template>
@@ -46,51 +39,47 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const pacienteId = route.params.id
-const fileInput = ref(null)
+const pacienteNombre = ref('')
 const files = ref([])
 
-async function listFiles() {
-  files.value = await $fetch(`/api/expedientes/${pacienteId}`)
+async function getPaciente() {
+  try {
+    const paciente = await $fetch(
+      `https://proyectoveterinario-2025-quantumcoders.onrender.com/api/v1/pacientes/${pacienteId}`
+    )
+    pacienteNombre.value = paciente.nombre || ''
+  } catch (error) {
+    console.error('Error al obtener paciente:', error)
+    pacienteNombre.value = ''
+  }
 }
 
-async function uploadFile() {
-  if (!fileInput.value.files.length) return alert('Selecciona un archivo')
-  const file = fileInput.value.files[0]
-
-  // Validaciones
-  const allowedTypes = [
-    'image/jpeg', 'image/png', 'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain'
-  ]
-  if (!allowedTypes.includes(file.type)) return alert('Tipo de archivo no permitido.')
-
-  const maxSize = 50 * 1024 * 1024
-  if (file.size > maxSize) return alert('Archivo demasiado grande. Máx 50 MB.')
-
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('paciente_id', pacienteId)
-
+async function listFiles() {
   try {
-    const result = await $fetch('/api/expedientes/upload', {
-      method: 'POST',
-      body: formData
-    })
-    alert(result.message)
-    listFiles()
+    files.value = await $fetch(
+      `https://proyectoveterinario-2025-quantumcoders.onrender.com/api/v1/expediente_archivos/paciente/${pacienteId}`
+    )
   } catch (error) {
-    alert(error?.message || 'Error al subir el archivo')
+    console.error('Error al cargar archivos:', error)
+    files.value = []
   }
 }
 
 async function deleteFile(fileId) {
-  const result = await $fetch(`/api/expedientes/${pacienteId}/${fileId}`, { method: 'DELETE' })
-  if (result.message) alert(result.message)
-  listFiles()
+  try {
+    const result = await $fetch(
+      `https://proyectoveterinario-2025-quantumcoders.onrender.com/api/v1/expedientes/${fileId}`,
+      { method: 'DELETE' }
+    )
+    alert(result.message || 'Archivo eliminado')
+    listFiles()
+  } catch (error) {
+    alert(error?.message || 'Error al eliminar el archivo')
+  }
 }
 
-onMounted(listFiles)
+onMounted(() => {
+  getPaciente()
+  listFiles()
+})
 </script>

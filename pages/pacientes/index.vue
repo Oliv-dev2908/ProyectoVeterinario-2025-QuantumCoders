@@ -18,7 +18,7 @@
         </router-link>
         <router-link :to="`/pacientes/${p.id_paciente}/archivos`"
           class="bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600">
-          Agregar Archivo
+          Ver Expediente📁
         </router-link>
 
         <button @click="eliminarPaciente(p.id_paciente)"
