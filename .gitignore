@@ -7,3 +7,6 @@ node_modules
 .env
 # Extra data
 .data
+
+#Variables Entorno
+.env
