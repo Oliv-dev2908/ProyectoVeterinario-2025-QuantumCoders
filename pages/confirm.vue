@@ -1,9 +1,3 @@
-<template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800">
-    <p class="text-lg">Confirmando inicio de sesión con {{ providerName }}...</p>
-  </div>
-</template>
-
 <script setup>
 import { useSupabaseUser } from '#imports'
 
@@ -22,16 +16,21 @@ const providerName = computed(() => {
 
 watch(user, async (newUser) => {
   if (newUser) {
-    // Aquí guardamos el usuario en tu API, igual que en login normal
     try {
-      await fetch(`/api/user/loginsignup?uuid=${newUser.id}&name=${newUser.user_metadata.full_name || newUser.user_metadata.name}`)
-      return navigateTo("/") // 🚀 lo mandamos al home
+      await $fetch('/api/user/loginsignup', {
+        method: 'GET',
+        params: {
+          uuid: newUser.id,
+          name: newUser.user_metadata.full_name || newUser.user_metadata.name,
+          email: newUser.email
+        }
+      })
+
+      return navigateTo("/") // redirige al home
     } catch (error) {
-      console.error("Error durante fetch:", error)
+      console.error("Error al registrar/confirmar usuario:", error)
     }
   }
 }, { immediate: true })
+
 </script>
-
-
-
