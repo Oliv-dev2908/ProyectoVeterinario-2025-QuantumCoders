@@ -123,7 +123,7 @@ async function signIn() {
     if (error) throw error
 
     // Guardar usuario en API y redirigir
-    await fetch(`/api/user/loginsignup?uuid=${data.user.id}&name=${data.user.user_metadata.full_name || data.user.user_metadata.name || data.user.email}`)
+    await fetch(`/api/user/loginsignup?uuid=${data.user.id}&name=${encodeURIComponent(data.user.user_metadata.full_name || data.user.user_metadata.name || data.user.email)}&email=${encodeURIComponent(data.user.email)}`)
     router.push("/")
   } catch (error) {
     errorMsg.value = error.message
