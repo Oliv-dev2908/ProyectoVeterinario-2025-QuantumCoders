@@ -55,7 +55,24 @@
         <p><strong>Estado corporal:</strong> {{ pacienteSeleccionado.estado_corporal }}</p>
         <p><strong>Peso:</strong> {{ pacienteSeleccionado.peso }} kg</p>
         <p><strong>Cliente:</strong> {{ pacienteSeleccionado.id_cliente }}</p>
+
+        <!-- Dentro del div del modal, después de los datos del paciente -->
+        <div class="mt-6 flex justify-center">
+          <button @click="abrirModalCirugias(pacienteSeleccionado.id_paciente)"
+            class="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded shadow transition duration-200">
+            Ver Cirugías
+          </button>
+        </div>
+
+        <!-- Modal de cirugías -->
+        <CirugiasModal :pacienteId="pacienteIdCirugias" v-model:visible="cirugiasModalVisible"
+          :paciente="pacienteSeleccionado" />
+
+
       </div>
+
+
+
     </div>
   </div>
 </template>
@@ -63,12 +80,16 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { pacientesService } from "~/server/services/pacientesService";
+import CirugiasModal from '~/components/CirugiasModal.vue'
 
 const pacientes = ref([]);
 const error = ref("");
 
 const modalVisible = ref(false);
 const pacienteSeleccionado = ref({});
+
+const cirugiasModalVisible = ref(false)
+const pacienteIdCirugias = ref(null)
 
 const cargarPacientes = async () => {
   try {
@@ -100,4 +121,15 @@ const eliminarPaciente = async (id) => {
     error.value = "Error al eliminar paciente";
   }
 };
+
+
+const abrirModalCirugias = (idPaciente) => {
+  pacienteIdCirugias.value = idPaciente
+  cirugiasModalVisible.value = true
+}
+
+const cerrarModalCirugias = () => {
+  cirugiasModalVisible.value = false
+  pacienteIdCirugias.value = null
+}
 </script>
