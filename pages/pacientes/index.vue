@@ -21,6 +21,11 @@
           Ver Expediente📁
         </router-link>
 
+        <button @click="irAReportes(p.id_paciente)"
+          class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded shadow">
+          Ver Reportes
+        </button>
+
         <button @click="eliminarPaciente(p.id_paciente)"
           class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
           Eliminar
@@ -55,20 +60,71 @@
         <p><strong>Estado corporal:</strong> {{ pacienteSeleccionado.estado_corporal }}</p>
         <p><strong>Peso:</strong> {{ pacienteSeleccionado.peso }} kg</p>
         <p><strong>Cliente:</strong> {{ pacienteSeleccionado.id_cliente }}</p>
+
+        <!-- Dentro del div del modal, después de los datos del paciente -->
+        <div class="mt-6 flex justify-center">
+          <button @click="abrirModalCirugias(pacienteSeleccionado.id_paciente)"
+            class="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded shadow transition duration-200">
+            Ver Cirugías
+          </button>
+
+          <button @click="abrirModalTratamientos(pacienteSeleccionado.id_paciente)"
+            class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-2 rounded shadow transition duration-200">
+            Ver Tratamientos
+          </button>
+
+          <button @click="abrirModalFisioterapias(pacienteSeleccionado.id_paciente)"
+            class="bg-purple-500 hover:bg-purple-600 text-white font-semibold px-6 py-2 rounded shadow transition duration-200">
+            Ver Fisioterapias
+          </button>
+        </div>
+
+        <!-- Modal de cirugías -->
+        <CirugiasModal :pacienteId="pacienteIdCirugias" v-model:visible="cirugiasModalVisible"
+          :paciente="pacienteSeleccionado" />
+
+        <!-- Modal de tratamientos -->
+        <TratamientosModal :pacienteId="pacienteIdTratamientos" v-model:visible="tratamientosModalVisible"
+          :paciente="pacienteSeleccionado" />
+
+        <!-- Modal de fisioterapias -->
+        <FisioterapiasModal :pacienteId="pacienteIdFisioterapias" v-model:visible="fisioterapiaModalVisible"
+          :paciente="pacienteSeleccionado" />
+
+
       </div>
+
+
+
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "#imports";
 import { pacientesService } from "~/server/services/pacientesService";
+import CirugiasModal from '~/components/CirugiasModal.vue'
+import TratamientosModal from '~/components/TratamientosModal.vue'
+
+const router = useRouter();
 
 const pacientes = ref([]);
 const error = ref("");
 
 const modalVisible = ref(false);
 const pacienteSeleccionado = ref({});
+
+const cirugiasModalVisible = ref(false);
+const pacienteIdCirugias = ref(null);
+
+// Tratamientos
+const tratamientosModalVisible = ref(false);
+const pacienteIdTratamientos = ref(null);
+
+// Fisioterapia
+const fisioterapiaModalVisible = ref(false);
+const pacienteIdFisioterapias = ref(null);
 
 const cargarPacientes = async () => {
   try {
@@ -99,5 +155,26 @@ const eliminarPaciente = async (id) => {
   } catch (e) {
     error.value = "Error al eliminar paciente";
   }
+};
+
+
+const abrirModalCirugias = (idPaciente) => {
+  pacienteIdCirugias.value = idPaciente
+  cirugiasModalVisible.value = true
+}
+
+const abrirModalTratamientos = (idPaciente) => {
+  pacienteIdTratamientos.value = idPaciente;
+  tratamientosModalVisible.value = true;
+};
+
+
+const abrirModalFisioterapias = (idPaciente) => {
+  pacienteIdFisioterapias.value = idPaciente;
+  fisioterapiaModalVisible.value = true;
+};
+
+const irAReportes = (idPaciente) => {
+  router.push(`/reportes/${idPaciente}`);
 };
 </script>

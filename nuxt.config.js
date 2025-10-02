@@ -7,7 +7,15 @@ export default defineNuxtConfig({
     supabaseKey: process.env.SUPABASE_KEY,
     bucketName: process.env.BUCKET_NAME
   },
-  modules: ['@nuxtjs/tailwindcss'], // ← ya sin supabase
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
+  supabase: {
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      exclude: ['/signUp'],
+    }
+  },
   css: ['@/assets/css/tailwind.css'],
+
   compatibilityDate: '2025-03-28'
 })
