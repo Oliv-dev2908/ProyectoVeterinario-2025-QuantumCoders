@@ -12,6 +12,11 @@
                 <button @click="abrirModal(c)" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
                     Ver Detalles
                 </button>
+                <button @click="enviarRecordatorio(c.telefono, c.nombres)"
+                    class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
+                    Enviar Recordatorio
+                </button>
+
                 <router-link :to="`/clientes/${c.id_cliente}`"
                     class="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500">
                     Editar
@@ -73,14 +78,42 @@ const cerrarModal = () => {
 };
 
 const eliminarCliente = async (id) => {
-  if (!confirm("¿Seguro quieres eliminar este cliente?")) return;
+    if (!confirm("¿Seguro quieres eliminar este cliente?")) return;
 
-  try {
-    await $fetch(`/api/clientes/${id}`, { method: "DELETE" });
-    // Recargar lista
-    clientes.value = await $fetch("/api/clientes");
-  } catch (e) {
-    error.value = "Error al eliminar cliente";
-  }
+    try {
+        await $fetch(`/api/clientes/${id}`, { method: "DELETE" });
+        // Recargar lista
+        clientes.value = await $fetch("/api/clientes");
+    } catch (e) {
+        error.value = "Error al eliminar cliente";
+    }
 };
+
+const enviarRecordatorio = async (telefono, nombre) => {
+    if (!telefono) {
+        alert("El cliente no tiene número de teléfono válido")
+        return
+    }
+
+    const mensaje = `¡Hola ${nombre}! 😊 Te recordamos tu cita con nosotros. ¡Te esperamos pronto!`
+
+    try {
+        const res = await $fetch("/api/whatsapp/send", {
+            method: "POST",
+            body: { phone: telefono, message: mensaje },
+        })
+
+        if (res.success) {
+            alert(`✅ Mensaje enviado correctamente a ${telefono}`)
+        } else {
+            alert("❌ No se pudo enviar el mensaje")
+        }
+    } catch (error) {
+        console.error(error)
+        alert("Error al enviar el mensaje")
+    }
+}
+
+
+
 </script>

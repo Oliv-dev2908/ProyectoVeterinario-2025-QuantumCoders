@@ -5,7 +5,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseKey: process.env.SUPABASE_KEY,
-    bucketName: process.env.BUCKET_NAME
+    bucketName: process.env.BUCKET_NAME,
+    API_KEY: process.env.WASENDER_API_KEY,
+    DEVICE_ID: process.env.WASENDER_DEVICE_ID
   },
   modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
   supabase: {
