@@ -104,8 +104,8 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "#imports";
 import { pacientesService } from "~/server/services/pacientesService";
-import CirugiasModal from '~/components/CirugiasModal.vue'
-import TratamientosModal from '~/components/TratamientosModal.vue'
+import CirugiasModal from '~/components/cirugiasModal.vue'
+import TratamientosModal from '~/components/tratamientosModal.vue'
 
 const router = useRouter();
 
