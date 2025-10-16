@@ -228,10 +228,13 @@ const isTypingPassword = ref(false);
 
 const eyePos = ref({ x: 0, y: 0 });
 const moveEyes = (e) => {
-  const x = (e.clientX / window.innerWidth - 0.5) * 10;
-  const y = (e.clientY / window.innerHeight - 0.5) * 10;
-  eyePos.value = { x, y };
-};
+  const x = (e.clientX / window.innerWidth - 0.5) * 10
+  const y = (e.clientY / window.innerHeight - 0.5) * 10
+  const pupils = document.querySelectorAll('.dog-pupil, .cat-pupil, .rabbit-pupil')
+  pupils.forEach(pupil => {
+    pupil.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
+  })
+}
 const eyeStyle = computed(() => ({
   transform: `translate(${eyePos.value.x}px, ${eyePos.value.y}px)`,
   transition: "transform 0.1s ease",
