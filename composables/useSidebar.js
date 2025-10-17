@@ -1,12 +1,14 @@
-// composables/useSidebar.js
 import { ref } from 'vue'
 
-const sidebarOpen = ref(true)
+const isCollapsed = ref(false)
 
 export function useSidebar() {
-  const toggleSidebar = () => {
-    sidebarOpen.value = !sidebarOpen.value
+  function toggleSidebar() {
+    isCollapsed.value = !isCollapsed.value
   }
 
-  return { sidebarOpen, toggleSidebar }
+  return {
+    isCollapsed,
+    toggleSidebar
+  }
 }
