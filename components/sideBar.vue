@@ -54,18 +54,17 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSupabaseUser } from '#imports'
 import { useUser } from '~/composables/useUser'
-import { useSidebarStore } from '~/stores/sidebar'
+import { useSidebar } from '~/composables/useSidebar'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
-const sidebar = useSidebarStore() // 🧩 usamos el store
+
 const selected = ref('Inicio')
 const router = useRouter()
 const user = useSupabaseUser()
 const { getUserRole } = useUser()
 const userRole = ref(null)
+const { isCollapsed, toggleSidebar } = useSidebar()
 
-const toggleSidebar = sidebar.toggleSidebar
-const isCollapsed = computed(() => sidebar.isCollapsed)
 const goTo = (path) => router.push(path)
 
 const client = useSupabaseClient()
