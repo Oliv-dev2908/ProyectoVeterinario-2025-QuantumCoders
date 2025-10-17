@@ -1,5 +1,4 @@
 export default defineNuxtConfig({
-  devtools: { enabled: process.env.NODE_ENV === 'development' },
   server: {
     host: '0.0.0.0',
     port: process.env.PORT || 3000
