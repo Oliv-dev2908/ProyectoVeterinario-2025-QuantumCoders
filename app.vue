@@ -8,7 +8,7 @@
       class="flex-1 overflow-y-auto transition-all duration-300"
       :class="[
         showSidebar
-          ? (sidebar.isCollapsed ? 'ml-20' : 'ml-64')
+          ? (isCollapsed ? 'ml-20' : 'ml-64')
           : 'ml-0'
       ]"
     >
@@ -21,9 +21,9 @@
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 import Sidebar from '~/components/sideBar.vue'
-import { useSidebarStore } from '~/stores/sidebar'
+import { useSidebar } from '~/composables/useSidebar' // ✅ usamos el nuevo composable
 
-const sidebar = useSidebarStore()
+const { isCollapsed } = useSidebar() // ✅ reemplaza a useSidebarStore()
 const route = useRoute()
 
 const noSidebarRoutes = ['/login', '/signup', '/no-permission']
