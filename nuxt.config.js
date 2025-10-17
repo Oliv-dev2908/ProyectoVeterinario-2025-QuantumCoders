@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     API_KEY: process.env.WASENDER_API_KEY,
     DEVICE_ID: process.env.WASENDER_DEVICE_ID
   },
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase','@pinia/nuxt',],
   supabase: {
     redirectOptions: {
       login: '/login',
