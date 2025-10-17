@@ -41,9 +41,12 @@ import { ref, onMounted } from "vue"
 
 const usuarios = ref([])
 const roles = ref([
-  { id_rol: 1, nombre_rol: "Administrador" },
-  { id_rol: 2, nombre_rol: "Veterinario" },
-  { id_rol: 3, nombre_rol: "Recepcionista" },
+  { id_rol: 1, nombre_rol: "Usuario" },
+  { id_rol: 2, nombre_rol: "Administrador" },
+  { id_rol: 3, nombre_rol: "Cirujano" },
+  { id_rol: 4, nombre_rol: "Veterinario" },
+  { id_rol: 6, nombre_rol: "Enfermero" },
+  { id_rol: 7, nombre_rol: "Recepcionista"}
 ]) 
 
 // ✅ Cargar usuarios desde nuestra API interna
