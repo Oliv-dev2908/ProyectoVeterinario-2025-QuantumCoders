@@ -1402,13 +1402,6 @@
   resolved "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-6.6.4.tgz"
   integrity sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==
 
-"@vue/devtools-api@^7.7.2":
-  version "7.7.7"
-  resolved "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-7.7.7.tgz"
-  integrity sha512-lwOnNBH2e7x1fIIbVT7yF5D+YWhqELm55/4ZKf45R9T8r9dE2AIOy8HKjfqzGsoTHFbWbr337O4E0A0QADnjBg==
-  dependencies:
-    "@vue/devtools-kit" "^7.7.7"
-
 "@vue/devtools-core@^7.7.2":
   version "7.7.2"
   resolved "https://registry.npmjs.org/@vue/devtools-core/-/devtools-core-7.7.2.tgz"
@@ -1421,7 +1414,7 @@
     pathe "^2.0.2"
     vite-hot-client "^0.2.4"
 
-"@vue/devtools-kit@^7.7.2", "@vue/devtools-kit@^7.7.7":
+"@vue/devtools-kit@^7.7.2":
   version "7.7.7"
   resolved "https://registry.npmjs.org/@vue/devtools-kit/-/devtools-kit-7.7.7.tgz"
   integrity sha512-wgoZtxcTta65cnZ1Q6MbAfePVFxfM+gq0saaeytoph7nEa7yMXoi6sCPy4ufO111B9msnw0VOWjPEFCXuAKRHA==
@@ -3992,13 +3985,6 @@ pify@^2.3.0:
   resolved "https://registry.npmjs.org/pify/-/pify-2.3.0.tgz"
   integrity sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==
 
-pinia@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.npmjs.org/pinia/-/pinia-3.0.3.tgz"
-  integrity sha512-ttXO/InUULUXkMHpTdp9Fj4hLpD/2AoJdmAbAeW2yu1iy1k+pkFekQXw5VpC0/5p51IOR/jDaDRfRWRnMMsGOA==
-  dependencies:
-    "@vue/devtools-api" "^7.7.2"
-
 pirates@^4.0.1:
   version "4.0.7"
   resolved "https://registry.npmjs.org/pirates/-/pirates-4.0.7.tgz"
@@ -5466,6 +5452,11 @@ yargs@^17.2.1, yargs@^17.5.1:
     string-width "^4.2.3"
     y18n "^5.0.5"
     yargs-parser "^21.1.1"
+
+yarn@^1.22.22:
+  version "1.22.22"
+  resolved "https://registry.yarnpkg.com/yarn/-/yarn-1.22.22.tgz#ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+  integrity sha512-prL3kGtyG7o9Z9Sv8IPfBNrWTDmXB4Qbes8A9rEzt6wkJV8mUvoirjU0Mp3GGAU06Y0XQyA3/2/RQFVuK7MTfg==
 
 ylru@^1.2.0:
   version "1.4.0"

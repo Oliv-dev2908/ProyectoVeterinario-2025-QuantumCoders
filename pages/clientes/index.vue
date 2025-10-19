@@ -1,50 +1,112 @@
 <template>
-    <div class="max-w-4xl mx-auto p-6">
-        <h1 class="text-3xl font-bold mb-6">Clientes</h1>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex">
+    <!-- Ajuste por sidebar -->
+    <div class="flex-1 p-8 ml-55">
+      <!-- 🐾 Encabezado -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">🐾 Clientes</h1>
+          <p class="text-gray-500 text-sm mt-1">Gestión de clientes y dueños de mascotas</p>
+        </div>
 
-        <div v-for="c in clientes" :key="c.id_cliente"
-            class="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
-            <div>
-                <p class="text-lg font-semibold">{{ c.nombres }} {{ c.apellidos }}</p>
-                <p class="text-gray-600">{{ c.telefono }} | {{ c.zona }}, {{ c.calle }} #{{ c.numero }}</p>
-            </div>
-            <div class="flex gap-2">
-                <button @click="abrirModal(c)" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                    Ver Detalles
-                </button>
-                <button @click="enviarRecordatorio(c.telefono, c.nombres)"
-                    class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
-                    Enviar Recordatorio
-                </button>
+        <router-link
+          to="/clientes/nuevo"
+          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow hover:scale-105 transition"
+        >
+          ➕ Nuevo Cliente
+        </router-link>
+      </div>
 
-                <router-link :to="`/clientes/${c.id_cliente}`"
-                    class="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500">
-                    Editar
+      <!-- 🧾 Tabla -->
+      <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+        <table class="min-w-full text-left text-gray-700">
+          <thead>
+            <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
+              <th class="p-3">Nombre</th>
+              <th class="p-3">Teléfono</th>
+              <th class="p-3">Dirección</th>
+              <th class="p-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="c in clientes"
+              :key="c.id_cliente"
+              class="border-t hover:bg-teal-50 transition"
+            >
+              <td class="p-3 font-medium">{{ c.nombres }} {{ c.apellidos }}</td>
+              <td class="p-3">{{ c.telefono || '—' }}</td>
+              <td class="p-3">{{ c.zona }}, {{ c.calle }} #{{ c.numero }}</td>
+
+              <td class="p-3 flex justify-center gap-3">
+                <button
+                  @click="abrirModal(c)"
+                  class="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  👁️ Ver
+                </button>
+                <router-link
+                  :to="`/clientes/${c.id_cliente}`"
+                  class="text-yellow-600 hover:text-yellow-800 font-medium"
+                >
+                  ✏️ Editar
                 </router-link>
-                <button @click="eliminarCliente(c.id_cliente)"
-                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                    Eliminar
+                <button
+                  @click="eliminarCliente(c.id_cliente)"
+                  class="text-red-500 hover:text-red-700 font-medium"
+                >
+                  🗑️ Eliminar
                 </button>
+              </td>
+            </tr>
 
-            </div>
+            <tr v-if="clientes.length === 0">
+              <td colspan="4" class="p-6 text-center text-gray-500">
+                No hay clientes registrados aún 🐶
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ⚠️ Error -->
+      <p v-if="error" class="text-red-500 mt-4 text-center">{{ error }}</p>
+
+      <!-- 💬 Modal Detalles -->
+      <div
+        v-if="modalVisible"
+        class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+      >
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full relative">
+          <button
+            @click="cerrarModal"
+            class="absolute top-2 right-3 text-gray-500 hover:text-gray-700 text-xl"
+          >
+            ✖
+          </button>
+
+          <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
+            {{ clienteSeleccionado.nombres }} {{ clienteSeleccionado.apellidos }}
+          </h2>
+          <div class="space-y-2 text-gray-700">
+            <p><strong>📞 Teléfono:</strong> {{ clienteSeleccionado.telefono || '—' }}</p>
+            <p><strong>📍 Zona:</strong> {{ clienteSeleccionado.zona || '—' }}</p>
+            <p><strong>🏠 Calle:</strong> {{ clienteSeleccionado.calle || '—' }}</p>
+            <p><strong>🏘️ Número:</strong> {{ clienteSeleccionado.numero || '—' }}</p>
+          </div>
+
+          <div class="text-center mt-6">
+            <button
+              @click="cerrarModal"
+              class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2 rounded-xl hover:scale-105 transition"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
-
-        <p v-if="error" class="text-red-500 mt-2">{{ error }}</p>
-
-        <!-- Modal -->
-        <div v-if="modalVisible" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div class="bg-white p-6 rounded shadow max-w-md w-full relative">
-                <button @click="cerrarModal"
-                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">&times;</button>
-                <h2 class="text-2xl font-bold mb-4">{{ clienteSeleccionado.nombres }} {{ clienteSeleccionado.apellidos
-                    }}</h2>
-                <p><strong>Teléfono:</strong> {{ clienteSeleccionado.telefono }}</p>
-                <p><strong>Zona:</strong> {{ clienteSeleccionado.zona }}</p>
-                <p><strong>Calle:</strong> {{ clienteSeleccionado.calle }}</p>
-                <p><strong>Número:</strong> {{ clienteSeleccionado.numero }}</p>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
@@ -58,62 +120,32 @@ const modalVisible = ref(false);
 const clienteSeleccionado = ref({});
 
 const cargarClientes = async () => {
-    try {
-        clientes.value = await clientesService.listarClientes();
-    } catch (e) {
-        error.value = "Error al cargar clientes";
-    }
+  try {
+    clientes.value = await clientesService.listarClientes();
+  } catch (e) {
+    error.value = "Error al cargar clientes";
+  }
 };
 
 onMounted(cargarClientes);
 
 const abrirModal = (cliente) => {
-    clienteSeleccionado.value = cliente;
-    modalVisible.value = true;
+  clienteSeleccionado.value = cliente;
+  modalVisible.value = true;
 };
 
 const cerrarModal = () => {
-    modalVisible.value = false;
-    clienteSeleccionado.value = {};
+  modalVisible.value = false;
+  clienteSeleccionado.value = {};
 };
 
 const eliminarCliente = async (id) => {
-    if (!confirm("¿Seguro quieres eliminar este cliente?")) return;
-
-    try {
-        await $fetch(`/api/clientes/${id}`, { method: "DELETE" });
-        // Recargar lista
-        clientes.value = await $fetch("/api/clientes");
-    } catch (e) {
-        error.value = "Error al eliminar cliente";
-    }
+  if (!confirm("¿Seguro quieres eliminar este cliente?")) return;
+  try {
+    await $fetch(`/api/clientes/${id}`, { method: "DELETE" });
+    clientes.value = await $fetch("/api/clientes");
+  } catch (e) {
+    error.value = "Error al eliminar cliente";
+  }
 };
-
-const enviarRecordatorio = async (telefono, nombre) => {
-    if (!telefono) {
-        alert("El cliente no tiene número de teléfono válido")
-        return
-    }
-
-    const mensaje = `¡Hola ${nombre}! 😊 Te recordamos tu cita con nosotros. ¡Te esperamos pronto!`
-
-    try {
-        const res = await $fetch("/api/whatsapp/send", {
-            method: "POST",
-            body: { phone: telefono, message: mensaje },
-        })
-
-        if (res.success) {
-            alert(`✅ Mensaje enviado correctamente a ${telefono}`)
-        } else {
-            alert("❌ No se pudo enviar el mensaje")
-        }
-    } catch (error) {
-        console.error(error)
-        alert("Error al enviar el mensaje")
-    }
-}
-
-
-
 </script>

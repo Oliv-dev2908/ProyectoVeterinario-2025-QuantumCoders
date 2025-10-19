@@ -1,8 +1,16 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
+    <!-- 🔙 Botón regresar fijo en esquina superior izquierda -->
+    <button
+      @click="router.push('/cirugias')"
+      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50"
+    >
+      ← Volver a Cirugías
+    </button>
+
     <!-- Ajuste por sidebar -->
     <div class="w-full max-w-2xl p-8 ml-65">
-      <!-- 🩺 Encabezado -->
+      <!-- 🩺 Encabezado centrado -->
       <div class="mb-8 text-center">
         <h1 class="text-3xl font-bold text-gray-800">➕ Nueva Cirugía</h1>
         <p class="text-gray-500 text-sm mt-1">
@@ -21,11 +29,7 @@
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
             >
               <option value="" disabled>Seleccione un paciente</option>
-              <option
-                v-for="p in pacientes"
-                :key="p.id_paciente"
-                :value="p.id_paciente"
-              >
+              <option v-for="p in pacientes" :key="p.id_paciente" :value="p.id_paciente">
                 {{ p.nombre }}
               </option>
             </select>
@@ -66,6 +70,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
@@ -115,7 +120,7 @@ const guardarCirugia = async () => {
   try {
     await $fetch('/api/cirugias', { method: 'POST', body: form.value })
     alert('✅ Cirugía registrada exitosamente')
-    router.push('/cirugias') // 🔹 Redirigir a la página de cirugías
+    router.push('/cirugias')
   } catch (err) {
     console.error('Error guardando cirugía:', err)
     alert('❌ Error guardando cirugía: ' + (err.data?.error || err.message))

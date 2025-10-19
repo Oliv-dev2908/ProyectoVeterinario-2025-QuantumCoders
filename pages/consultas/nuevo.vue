@@ -1,71 +1,116 @@
 <template>
-  <div class="max-w-xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">Nueva Consulta</h1>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
+    <!-- 🔙 Botón regresar -->
+    <button
+      @click="router.push('/consultas')"
+      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50"
+    >
+      ← Volver a Consultas
+    </button>
 
-    <form @submit.prevent="guardarConsulta">
-      <!-- 🐾 Paciente -->
-      <label class="block mb-1">🐾 Paciente</label>
-      <select v-model="form.id_paciente" class="border p-2 w-full mb-4">
-        <option value="">Seleccione un paciente</option>
-        <option v-for="p in pacientes" :key="p.id_paciente" :value="p.id_paciente">
-          {{ p.nombre }}
-        </option>
-      </select>
+    <!-- Tarjeta central -->
+    <div class="w-full max-w-3xl p-8 ml-65">
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-800">➕ Nueva Consulta</h1>
+        <p class="text-gray-500 text-sm mt-1">Registra una nueva consulta</p>
+      </div>
 
-      <!-- 👩‍⚕️ Médico / Usuario -->
-      <label class="block mb-1">👩‍⚕️ Médico</label>
-      <input type="text" v-model="nombreUsuario"
-        class="border p-2 w-full mb-4 bg-gray-100 text-gray-600 cursor-not-allowed" disabled />
+      <div class="bg-white shadow-2xl rounded-2xl p-8 border border-gray-200">
+        <form @submit.prevent="guardarConsulta" class="space-y-6">
+          <!-- Paciente -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">🐾 Paciente</label>
+            <select v-model="form.id_paciente"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition">
+              <option value="">Seleccione un paciente</option>
+              <option v-for="p in pacientes" :key="p.id_paciente" :value="p.id_paciente">
+                {{ p.nombre }}
+              </option>
+            </select>
+          </div>
 
-      <!-- 📅 Fecha de la consulta -->
-      <label class="block mb-1">📅 Fecha de consulta</label>
-      <input type="datetime-local" v-model="form.fecha"
-        class="border p-2 w-full mb-4 bg-gray-100 text-gray-600 cursor-not-allowed" disabled />
+          <!-- Médico -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">👩‍⚕️ Médico</label>
+            <input type="text" v-model="nombreUsuario" disabled
+              class="w-full border-gray-300 rounded-xl p-3 bg-gray-100 text-gray-600 cursor-not-allowed" />
+          </div>
 
-      <!-- 💬 Motivo -->
-      <label class="block mb-1">💬 Motivo</label>
-      <textarea v-model="form.motivo" class="border p-2 w-full mb-4"
-        placeholder="Describe el motivo de la consulta"></textarea>
+          <!-- Fecha -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">📅 Fecha de consulta</label>
+            <input type="datetime-local" v-model="form.fecha" disabled
+              class="w-full border-gray-300 rounded-xl p-3 bg-gray-100 text-gray-600 cursor-not-allowed" />
+          </div>
 
-      <!-- ⚕️ Signos clínicos -->
-      <label class="block mb-1">⚕️ Signos clínicos</label>
-      <textarea v-model="form.signosclinicos" class="border p-2 w-full mb-4"
-        placeholder="Ejemplo: fiebre, tos, falta de apetito..."></textarea>
+          <!-- Motivo -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">💬 Motivo</label>
+            <textarea v-model="form.motivo" placeholder="Describe el motivo de la consulta"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"></textarea>
+          </div>
 
-      <!-- 🔁 Curso -->
-      <label class="block mb-1">🔁 Curso</label>
-      <textarea v-model="form.curso" class="border p-2 w-full mb-4"
-        placeholder="Evolución del cuadro clínico"></textarea>
+          <!-- Signos clínicos -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">⚕️ Signos clínicos</label>
+            <textarea v-model="form.signosclinicos" placeholder="Ej: fiebre, tos..."
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"></textarea>
+          </div>
 
-      <!-- 🧠 Diagnóstico presuntivo -->
-      <label class="block mb-1">🧠 Diagnóstico presuntivo</label>
-      <textarea v-model="form.diagnosticopresuntivo" class="border p-2 w-full mb-4"></textarea>
+          <!-- Curso -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">🔁 Curso</label>
+            <textarea v-model="form.curso" placeholder="Evolución del cuadro clínico"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"></textarea>
+          </div>
 
-      <!-- 🧾 Observaciones -->
-      <label class="block mb-1">🧾 Observaciones</label>
-      <textarea v-model="form.observaciones" class="border p-2 w-full mb-4"></textarea>
+          <!-- Diagnóstico presuntivo -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">🧠 Diagnóstico presuntivo</label>
+            <textarea v-model="form.diagnosticopresuntivo"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"></textarea>
+          </div>
 
-      <!-- 📆 Próxima consulta -->
-      <label class="block mb-1">📆 Fecha próxima consulta (opcional)</label>
-      <input type="datetime-local" v-model="form.fechaproxconsulta" class="border p-2 w-full mb-4" />
+          <!-- Observaciones -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">🧾 Observaciones</label>
+            <textarea v-model="form.observaciones"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"></textarea>
+          </div>
 
-      <!-- ❤️ Condición -->
-      <label class="block mb-1">❤️ Condición</label>
-      <input type="text" v-model="form.condicion" class="border p-2 w-full mb-4"
-        placeholder="Ejemplo: estable, crítico, en recuperación..." />
+          <!-- Próxima consulta -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">📆 Fecha próxima consulta (opcional)</label>
+            <input type="datetime-local" v-model="form.fechaproxconsulta"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition" />
+          </div>
 
-      <!-- Botón -->
-      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-        Guardar
-      </button>
-    </form>
+          <!-- Condición -->
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">❤️ Condición</label>
+            <input type="text" v-model="form.condicion" placeholder="Ej: estable, crítico..."
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition" />
+          </div>
+
+          <!-- Botón guardar -->
+          <div class="flex justify-end">
+            <button type="submit"
+              class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold shadow hover:scale-105 active:scale-95 transition-transform">
+              Guardar Consulta
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue"
+import { useRouter } from "#imports"
 import { useSupabaseUser } from "#imports"
 
+const router = useRouter()
 const pacientes = ref([])
 const user = useSupabaseUser()
 const nombreUsuario = ref("Cargando...")
@@ -83,17 +128,12 @@ const form = ref({
   condicion: ""
 })
 
-// 🔄 Cargar pacientes y usuario
 onMounted(async () => {
   try {
-    // Cargar pacientes
     pacientes.value = await $fetch("/api/pacientes")
 
     const now = new Date()
-    const boliviaTime = new Date(
-      now.toLocaleString("en-US", { timeZone: "America/La_Paz" })
-    )
-    // Formato YYYY-MM-DDTHH:mm
+    const boliviaTime = new Date(now.toLocaleString("en-US", { timeZone: "America/La_Paz" }))
     const yyyy = boliviaTime.getFullYear()
     const mm = String(boliviaTime.getMonth() + 1).padStart(2, "0")
     const dd = String(boliviaTime.getDate()).padStart(2, "0")
@@ -101,36 +141,24 @@ onMounted(async () => {
     const min = String(boliviaTime.getMinutes()).padStart(2, "0")
     form.value.fecha = `${yyyy}-${mm}-${dd}T${hh}:${min}`
 
-
-    // Obtener usuario logueado
     if (user.value?.id) {
       const usuarioData = await $fetch(`/api/user/${user.value.id}`)
       form.value.id_usuario = usuarioData.id_usuario
       nombreUsuario.value = usuarioData.nombre || "Usuario desconocido"
-      console.log("🩺 ID usuario:", form.value.id_usuario)
     } else {
       nombreUsuario.value = "No logueado"
-      alert("Usuario no logueado.")
     }
   } catch (err) {
-    console.error("❌ Error cargando datos:", err)
-    alert("Error al cargar datos del formulario.")
+    console.error("Error cargando datos:", err)
   }
 })
 
-// 💾 Guardar consulta
 const guardarConsulta = async () => {
   try {
     const consultaBody = { ...form.value }
     if (!consultaBody.fechaproxconsulta) delete consultaBody.fechaproxconsulta
+    const nuevaConsulta = await $fetch("/api/consultas", { method: "POST", body: consultaBody })
 
-    // 1️⃣ Crear consulta
-    const nuevaConsulta = await $fetch("/api/consultas", {
-      method: "POST",
-      body: consultaBody
-    })
-
-    // 2️⃣ Si hay próxima consulta, crear cita
     if (form.value.fechaproxconsulta) {
       const nuevaCita = await $fetch("/api/citas", {
         method: "POST",
@@ -140,24 +168,20 @@ const guardarConsulta = async () => {
           motivo: form.value.motivo || "Consulta de seguimiento",
           estado: "pendiente",
           recordatorio_enviado: false,
-          id_consulta: nuevaConsulta.id_consulta // <--- relacionamos cita con consulta
+          id_consulta: nuevaConsulta.id_consulta
         }
       })
-
-      // 3️⃣ Actualizar consulta con el id_cita generado
       await $fetch(`/api/consultas/${nuevaConsulta.id_consulta}`, {
         method: "PUT",
         body: { id_cita: nuevaCita.id_cita }
       })
     }
 
-
     alert("✅ Consulta registrada correctamente.")
-    window.location.href = "/consultas"
+    router.push("/consultas")
   } catch (err) {
-    console.error("❌ Error al crear consulta:", err)
+    console.error("Error al crear consulta:", err)
     alert("Error al guardar la consulta.")
   }
 }
-
 </script>
