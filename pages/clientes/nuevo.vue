@@ -77,7 +77,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { clientesService } from "~/server/services/clientesService";
-import ModalError from "~/components/ModalError.vue";
+import ModalError from "~/components/modalError.vue";
 
 const router = useRouter();
 const cliente = ref({ nombres: "", apellidos: "", telefono: "", zona: "", calle: "", numero: "" });
