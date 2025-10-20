@@ -86,7 +86,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { clientesService } from "~/server/services/clientesService";
-import ModalError from "~/components/ModalError.vue";
+import ModalError from "~/components/modalError.vue";
 
 const route = useRoute();
 const router = useRouter();
