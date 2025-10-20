@@ -1,5 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
+  <div
+    class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
     <!-- Ajuste por sidebar -->
     <div class="w-full max-w-2xl p-8 ml-65">
       <!-- 🔙 Botón regresar fijo en esquina superior izquierda -->
@@ -52,6 +53,9 @@
             </button>
           </div>
         </form>
+
+        <ModalError :visible="modalVisible" :title="modalTitle" :message="modalMessage" @close="handleModalClose" />
+
       </div>
     </div>
   </div>
@@ -60,38 +64,115 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ModalError from '../../components/modalError.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+const modalVisible = ref(false)
+const modalMessage = ref('')
+const modalTitle = ref('')
+
+const showModal = (message, title = 'Aviso') => {
+  modalMessage.value = message
+  modalTitle.value = title
+  modalVisible.value = true
+}
+
+const handleModalClose = () => {
+  modalVisible.value = false
+  // Solo redirigir si fue éxito
+  if (modalTitle.value === '✅ Éxito') {
+    router.push('/cirugias')
+  }
+}
+
 const form = ref({
   id_paciente: '',
   fecha: new Date().toISOString().substr(0, 10),
   descripcion: ''
 })
+
 const pacientes = ref([])
 
 onMounted(async () => {
-  pacientes.value = await $fetch('/api/pacientes')
-  const data = await $fetch(`/api/cirugias/${route.params.id}`)
-  form.value = {
-    id_paciente: data.id_paciente,
-    fecha: data.fecha,
-    descripcion: data.descripcion
+  try {
+    pacientes.value = await $fetch('/api/pacientes')
+    const data = await $fetch(`/api/cirugias/${route.params.id}`)
+    form.value = {
+      id_paciente: data.id_paciente,
+      fecha: data.fecha,
+      descripcion: data.descripcion
+    }
+  } catch (err) {
+    console.error('Error cargando datos:', err)
+    showModal('No se pudieron cargar los datos.')
   }
 })
 
 const actualizarCirugia = async () => {
-  if (!form.value.id_paciente || !form.value.descripcion) {
-    alert('Por favor complete todos los campos.')
+  // Validación paciente
+  if (!form.value.id_paciente) {
+    showModal('Seleccione un paciente.', '❌ Error')
     return
   }
+
+  // Validación fecha
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const fechaSeleccionada = new Date(form.value.fecha)
+  fechaSeleccionada.setHours(0, 0, 0, 0)
+  const veinteDiasDespues = new Date(hoy)
+  veinteDiasDespues.setDate(veinteDiasDespues.getDate() + 20)
+
+  if (fechaSeleccionada < hoy) {
+    showModal('❌ La fecha no puede ser anterior a hoy.')
+    return
+  }
+  if (fechaSeleccionada > veinteDiasDespues) {
+    showModal('❌ La cirugía no puede programarse más de 20 días en el futuro.')
+    return
+  }
+
+  // Validación descripción
+  const descripcion = form.value.descripcion.trim()
+  if (descripcion.length < 10) {
+    showModal('❌ La descripción es demasiado corta.')
+    return
+  }
+  if (descripcion.length > 200) {
+    showModal('❌ La descripción es demasiado larga.')
+    return
+  }
+
+  const patronesRaros = [/aaaa/i, /xdxd/i, /f{2,}/i, /[^\w\s.,]/]
+  if (patronesRaros.some((patron) => patron.test(descripcion))) {
+    showModal('❌ La descripción contiene caracteres o secuencias inválidas.')
+    return
+  }
+
+  const sqlInjection = [/;/, /--/, /DROP/i, /DELETE/i, /INSERT/i, /UPDATE/i]
+  if (sqlInjection.some((patron) => patron.test(descripcion))) {
+    showModal('❌ La descripción contiene palabras reservadas o código no permitido.')
+    return
+  }
+
+  const malasPalabras = ['puta', 'mierda', 'tonto']
+  if (malasPalabras.some((palabra) => descripcion.toLowerCase().includes(palabra))) {
+    showModal('❌ La descripción contiene palabras inapropiadas.')
+    return
+  }
+
+  // Guardar cambios
   try {
-    await $fetch(`/api/cirugias/${route.params.id}`, { method: 'PUT', body: form.value })
-    alert('✅ Cirugía actualizada exitosamente')
-    router.push('/cirugias') // 🔹 Redirigir a la lista de cirugías
+    await $fetch(`/api/cirugias/${route.params.id}`, {
+      method: 'PUT',
+      body: form.value
+    })
+    showModal('Cirugía actualizada exitosamente.', '✅ Éxito')
   } catch (err) {
     console.error('Error actualizando cirugía:', err)
-    alert('❌ Error actualizando cirugía: ' + (err.data?.error || err.message))
+    showModal('❌ Error actualizando cirugía: ' + (err.data?.error || err.message))
   }
 }
 </script>

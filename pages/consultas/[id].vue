@@ -1,10 +1,9 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
+  <div
+    class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
     <!-- 🔙 Botón regresar -->
-    <button
-      @click="router.push('/consultas')"
-      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50"
-    >
+    <button @click="router.push('/consultas')"
+      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50">
       ← Volver a Consultas
     </button>
 
@@ -103,16 +102,23 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal -->
+  <ModalError :visible="modalVisible" :title="modalTitle" :message="modalMessage" @close="handleModalClose" />
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "#imports"
 import { useSupabaseUser } from "#imports"
+import ModalError from "@/components/ModalError.vue"
 
 const route = useRoute()
 const router = useRouter()
 const user = useSupabaseUser()
+
+const pacientes = ref([])
+const nombreUsuario = ref("Cargando...")
 
 const form = ref({
   id_consulta: 0,
@@ -129,15 +135,32 @@ const form = ref({
   condicion: ""
 })
 
-const pacientes = ref([])
-const nombreUsuario = ref("Cargando...")
+const modalVisible = ref(false)
+const modalTitle = ref("")
+const modalMessage = ref("")
+
+const handleModalClose = () => {
+  modalVisible.value = false
+  if (modalTitle.value === "✅ Éxito") router.push("/consultas")
+}
 
 onMounted(async () => {
   const id = route.params.id
   try {
     pacientes.value = await $fetch("/api/pacientes")
     const data = await $fetch(`/api/consultas/${id}`)
-    form.value = { ...data, id_cita: data.id_cita || null }
+    form.value = {
+      ...data,
+      id_cita: data.id_cita || null,
+      fecha: new Date(data.fecha).toISOString().slice(0, 16),
+      fechaproxconsulta: data.fechaproxconsulta ? data.fechaproxconsulta.slice(0, 16) : ""
+    }
+
+    // 🔹 Convertir formato de fecha a 'YYYY-MM-DDTHH:mm' (para datetime-local)
+    if (form.value.fechaproxconsulta) {
+      const fecha = new Date(form.value.fechaproxconsulta)
+      form.value.fechaproxconsulta = fecha.toISOString().slice(0, 16)
+    }
 
     if (user.value?.id) {
       const usuarioData = await $fetch(`/api/user/${user.value.id}`)
@@ -147,17 +170,86 @@ onMounted(async () => {
       nombreUsuario.value = "No logueado"
     }
   } catch (err) {
-    console.error("Error cargando datos de la consulta:", err)
-    alert("No se pudo cargar la consulta.")
+    console.error("Error cargando consulta:", err)
+    modalTitle.value = "⚠️ Error"
+    modalMessage.value = "No se pudo cargar la consulta."
+    modalVisible.value = true
   }
 })
 
+// 🔒 Validaciones iguales al formulario de crear
+const validarTexto = (texto) => {
+  if (!texto) return true
+  const patronesMaliciosos = [
+    /select|insert|update|delete|drop|union|--/i,
+    /<script.*?>.*?<\/script>/i
+  ]
+  const palabrasOfensivas = ["tonto", "idiota", "estúpido", "mierda", "puta"]
+  if (patronesMaliciosos.some(p => p.test(texto))) return false
+  const repetidos = /(.)\1{4,}/
+  if (repetidos.test(texto)) return false
+  if (palabrasOfensivas.some(p => texto.toLowerCase().includes(p))) return false
+  return true
+}
+
 const actualizarConsulta = async () => {
   try {
-    const body = { ...form.value }
+    if (!form.value.id_paciente) {
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "Debe seleccionar un paciente."
+      modalVisible.value = true
+      return
+    }
 
+    const camposTexto = ["motivo", "signosclinicos", "curso", "diagnosticopresuntivo", "observaciones", "condicion"]
+    for (let campo of camposTexto) {
+      if (!validarTexto(form.value[campo])) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = `El campo "${campo}" contiene caracteres no permitidos o repetitivos.`
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if(!form.value.motivo){
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "El motivo no puede estar vacio."
+      modalVisible.value = true
+      return
+    }
+
+    // Validar fecha próxima consulta
+    if (form.value.fechaproxconsulta) {
+      const fechaConsulta = new Date(form.value.fecha)
+      const fechaProx = new Date(form.value.fechaproxconsulta)
+      const diferenciaDias = (fechaProx - fechaConsulta) / (1000 * 60 * 60 * 24)
+      const hora = fechaProx.getHours() + fechaProx.getMinutes() / 60
+
+      if (fechaProx < fechaConsulta) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La fecha próxima consulta no puede ser anterior a la fecha de la consulta."
+        modalVisible.value = true
+        return
+      }
+      if (diferenciaDias > 20) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La fecha próxima consulta no puede superar 20 días desde la fecha actual."
+        modalVisible.value = true
+        return
+      }
+      if (hora < 9 || hora > 21) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La hora de próxima consulta debe estar entre 09:00 y 21:00."
+        modalVisible.value = true
+        return
+      }
+    }
+
+    // Actualizar consulta
+    const body = { ...form.value }
     await $fetch(`/api/consultas/${form.value.id_consulta}`, { method: "PUT", body })
 
+    // Crear o actualizar cita
     if (form.value.fechaproxconsulta) {
       if (form.value.id_cita) {
         await $fetch(`/api/citas/${form.value.id_cita}`, {
@@ -182,7 +274,6 @@ const actualizarConsulta = async () => {
             id_consulta: form.value.id_consulta
           }
         })
-        form.value.id_cita = nuevaCita.id_cita
         await $fetch(`/api/consultas/${form.value.id_consulta}`, {
           method: "PUT",
           body: { id_cita: nuevaCita.id_cita }
@@ -190,11 +281,14 @@ const actualizarConsulta = async () => {
       }
     }
 
-    alert("✅ Consulta y cita actualizadas correctamente.")
-    router.push("/consultas")
+    modalTitle.value = "✅ Éxito"
+    modalMessage.value = "Consulta actualizada correctamente."
+    modalVisible.value = true
   } catch (err) {
-    console.error("Error al actualizar consulta/cita:", err)
-    alert("No se pudo actualizar la consulta o la cita.")
+    console.error("Error al actualizar:", err)
+    modalTitle.value = "⚠️ Error"
+    modalMessage.value = "No se pudo actualizar la consulta."
+    modalVisible.value = true
   }
 }
 </script>

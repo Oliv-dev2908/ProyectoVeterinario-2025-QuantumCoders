@@ -1,10 +1,9 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
+  <div
+    class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
     <!-- 🔙 Botón regresar -->
-    <button
-      @click="router.push('/consultas')"
-      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50"
-    >
+    <button @click="router.push('/consultas')"
+      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50">
       ← Volver a Consultas
     </button>
 
@@ -100,6 +99,8 @@
             </button>
           </div>
         </form>
+
+        <ModalError :visible="modalVisible" :title="modalTitle" :message="modalMessage" @close="handleModalClose" />
       </div>
     </div>
   </div>
@@ -109,6 +110,7 @@
 import { ref, onMounted } from "vue"
 import { useRouter } from "#imports"
 import { useSupabaseUser } from "#imports"
+import ModalError from "@/components/ModalError.vue"
 
 const router = useRouter()
 const pacientes = ref([])
@@ -127,6 +129,34 @@ const form = ref({
   fecha: "",
   condicion: ""
 })
+
+const modalVisible = ref(false);
+const modalTitle = ref("");
+const modalMessage = ref("");
+
+const handleModalClose = () => {
+  modalVisible.value = false
+  if (modalTitle.value === '✅ Éxito') {
+    router.push('/consultas')
+  }
+}
+
+
+const validarTexto = (texto) => {
+  if (!texto) return true
+  const patronesMaliciosos = [
+    /select|insert|update|delete|drop|union|--/i, // SQL
+    /<script.*?>.*?<\/script>/i // XSS
+  ]
+  const palabrasOfensivas = ["tonto", "idiota", "estúpido", "mierda", "puta"]
+  if (patronesMaliciosos.some(p => p.test(texto))) return false
+  const repetidos = /(.)\1{4,}/ // 5 caracteres iguales seguidos
+  if (repetidos.test(texto)) return false
+  if (palabrasOfensivas.some(p => texto.toLowerCase().includes(p))) return false
+  return true
+}
+
+
 
 onMounted(async () => {
   try {
@@ -155,10 +185,68 @@ onMounted(async () => {
 
 const guardarConsulta = async () => {
   try {
+    // Validaciones obligatorias
+    if (!form.value.id_paciente) {
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "Debe seleccionar un paciente."
+      modalVisible.value = true
+      return
+    }
+
+    if(!form.value.motivo){
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "El motivo no puede estar vacio."
+      modalVisible.value = true
+      return
+    }
+
+    // Validación campos de texto
+    const camposTexto = ["motivo", "signosclinicos", "curso", "diagnosticopresuntivo", "observaciones", "condicion"]
+    for (let campo of camposTexto) {
+      if (!validarTexto(form.value[campo])) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = `El campo "${campo}" contiene caracteres no permitidos o repetitivos.`
+        modalVisible.value = true
+        return
+      }
+    }
+
+    // Validación fecha próxima consulta
+    if (form.value.fechaproxconsulta) {
+      const fechaConsulta = new Date(form.value.fecha)
+      const fechaProx = new Date(form.value.fechaproxconsulta)
+      const diferenciaDias = (fechaProx - fechaConsulta) / (1000 * 60 * 60 * 24)
+      const hora = fechaProx.getHours() + fechaProx.getMinutes() / 60
+
+      if (fechaProx < fechaConsulta) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La fecha de próxima consulta no puede ser anterior a la fecha de consulta actual."
+        modalVisible.value = true
+        return
+      }
+
+      if (diferenciaDias > 20) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La fecha de próxima consulta no puede superar 20 días desde la fecha de consulta."
+        modalVisible.value = true
+        return
+      }
+
+      if (hora < 9 || hora > 21) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La hora de próxima consulta debe estar entre 09:00 y 21:00."
+        modalVisible.value = true
+        return
+      }
+    }
+
+    // Preparar envío
     const consultaBody = { ...form.value }
     if (!consultaBody.fechaproxconsulta) delete consultaBody.fechaproxconsulta
+
     const nuevaConsulta = await $fetch("/api/consultas", { method: "POST", body: consultaBody })
 
+    // Crear cita si hay fecha próxima
     if (form.value.fechaproxconsulta) {
       const nuevaCita = await $fetch("/api/citas", {
         method: "POST",
@@ -177,11 +265,15 @@ const guardarConsulta = async () => {
       })
     }
 
-    alert("✅ Consulta registrada correctamente.")
-    router.push("/consultas")
+    modalTitle.value = "✅ Éxito"
+    modalMessage.value = "Consulta registrada correctamente."
+    modalVisible.value = true
+
   } catch (err) {
-    console.error("Error al crear consulta:", err)
-    alert("Error al guardar la consulta.")
+    console.error(err)
+    modalTitle.value = "⚠️ Error"
+    modalMessage.value = "Ocurrió un error al guardar la consulta."
+    modalVisible.value = true
   }
 }
 </script>
