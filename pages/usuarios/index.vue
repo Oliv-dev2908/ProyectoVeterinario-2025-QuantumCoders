@@ -1,38 +1,67 @@
 <template>
-  <div class="max-w-5xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">Gestión de Usuarios</h1>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex">
+    <!-- Ajuste por sidebar -->
+    <div class="flex-1 p-8 ml-55">
+      <!-- 🐾 Encabezado -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">👤 Gestión de Usuarios</h1>
+          <p class="text-gray-500 text-sm mt-1">Administración de roles y permisos del sistema</p>
+        </div>
+      </div>
 
-    <table class="w-full border border-gray-300 rounded-lg shadow">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="p-3 text-left">Nombre</th>
-          <th class="p-3 text-left">Email</th>
-          <th class="p-3 text-left">Rol</th>
-          <th class="p-3 text-center">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="u in usuarios" :key="u.supabase_user_id" class="border-b">
-          <td class="p-3">{{ u.nombre }}</td>
-          <td class="p-3">{{ u.email }}</td>
-          <td class="p-3">
-            <select v-model="u.rol_id" class="border rounded px-2 py-1">
-              <option v-for="rol in roles" :key="rol.id_rol" :value="rol.id_rol">
-                {{ rol.nombre_rol }}
-              </option>
-            </select>
-          </td>
-          <td class="p-3 text-center">
-            <button
-              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              @click="asignarRol(u)"
+      <!-- 🧾 Tabla de usuarios -->
+      <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+        <table class="min-w-full text-left text-gray-700">
+          <thead>
+            <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
+              <th class="p-3">Nombre</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Rol</th>
+              <th class="p-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="u in usuarios"
+              :key="u.supabase_user_id"
+              class="border-t hover:bg-teal-50 transition"
             >
-              Guardar
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              <td class="p-3">{{ u.nombre }}</td>
+              <td class="p-3">{{ u.email }}</td>
+              <td class="p-3">
+                <select
+                  v-model="u.rol_id"
+                  class="border rounded px-2 py-1 w-full"
+                >
+                  <option
+                    v-for="rol in roles"
+                    :key="rol.id_rol"
+                    :value="rol.id_rol"
+                  >
+                    {{ rol.nombre_rol }}
+                  </option>
+                </select>
+              </td>
+              <td class="p-3 flex justify-center gap-3">
+                <button
+                  class="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:scale-105 transition"
+                  @click="asignarRol(u)"
+                >
+                  Guardar
+                </button>
+              </td>
+            </tr>
+
+            <tr v-if="usuarios.length === 0">
+              <td colspan="4" class="p-6 text-center text-gray-500">
+                No hay usuarios registrados aún 🐶
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -46,10 +75,9 @@ const roles = ref([
   { id_rol: 3, nombre_rol: "Cirujano" },
   { id_rol: 4, nombre_rol: "Veterinario" },
   { id_rol: 6, nombre_rol: "Enfermero" },
-  { id_rol: 7, nombre_rol: "Recepcionista"}
-]) 
+  { id_rol: 7, nombre_rol: "Recepcionista" }
+])
 
-// ✅ Cargar usuarios desde nuestra API interna
 onMounted(async () => {
   try {
     usuarios.value = await $fetch("/api/user")
@@ -58,15 +86,13 @@ onMounted(async () => {
   }
 })
 
-// ✅ Asignar rol → llama a nuestra API interna
 const asignarRol = async (usuario) => {
   try {
-    // Enviamos todos los campos obligatorios con los valores actuales del usuario
     const body = {
       nombre: usuario.nombre,
       email: usuario.email,
       rol_id: usuario.rol_id,
-      activo: usuario.activo, // asegúrate que el objeto usuario tenga este campo
+      activo: usuario.activo,
     }
 
     await $fetch(`/api/user/${usuario.supabase_user_id}`, {
@@ -80,5 +106,4 @@ const asignarRol = async (usuario) => {
     alert("Error al actualizar rol ❌")
   }
 }
-
 </script>

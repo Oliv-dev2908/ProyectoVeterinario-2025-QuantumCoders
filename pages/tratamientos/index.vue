@@ -1,36 +1,79 @@
 <template>
-    <div class="max-w-4xl mx-auto p-6">
-        <h1 class="text-3xl font-bold mb-6">Tratamientos</h1>
-
-        <NuxtLink to="/tratamientos/nuevo" class="px-4 py-2 bg-blue-600 text-white rounded-lg mb-4 inline-block">
-            ➕ Nuevo Tratamiento
-        </NuxtLink>
-
-        <div v-for="t in tratamientos" :key="t.id_tratamiento"
-            class="bg-white p-4 rounded shadow mb-4 flex justify-between items-center">
-            <div>
-                <p class="text-lg font-semibold">
-                    🐾 Paciente: {{ t.nombre_paciente }}
-                </p>
-                <p class="text-gray-700">
-                    👨‍⚕️ Usuario: {{ t.nombre_usuario }}
-                </p>
-                <p class="text-gray-600">{{ t.descripcion }}</p>
-                <p class="text-sm text-gray-500">
-                    📅 {{ t.fecha_inicio }} → {{ t.fecha_fin }}
-                </p>
-            </div>
-            <div class="flex gap-2">
-                <NuxtLink :to="`/tratamientos/${t.id_tratamiento}`" class="px-3 py-1 bg-green-500 text-white rounded">
-                    Editar</NuxtLink>
-                <button @click="eliminar(t.id_tratamiento)"
-                    class="px-3 py-1 bg-red-500 text-white rounded">Eliminar</button>
-            </div>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex">
+    <!-- Ajuste por sidebar -->
+    <div class="flex-1 p-8 ml-55">
+      <!-- 🐾 Encabezado -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">💊 Tratamientos</h1>
+          <p class="text-gray-500 text-sm mt-1">Gestión de tratamientos veterinarios</p>
         </div>
+
+        <NuxtLink
+          to="/tratamientos/nuevo"
+          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow hover:scale-105 transition"
+        >
+          ➕ Nuevo Tratamiento
+        </NuxtLink>
+      </div>
+
+      <!-- 🧾 Tabla de tratamientos -->
+      <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+        <table class="min-w-full text-left text-gray-700">
+          <thead>
+            <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
+              <th class="p-3">ID</th>
+              <th class="p-3">Paciente</th>
+              <th class="p-3">Usuario</th>
+              <th class="p-3">Fecha inicio</th>
+              <th class="p-3">Fecha fin</th>
+              <th class="p-3">Descripción</th>
+              <th class="p-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="t in tratamientos"
+              :key="t.id_tratamiento"
+              class="border-t hover:bg-teal-50 transition"
+            >
+              <td class="p-3 font-medium">{{ t.id_tratamiento }}</td>
+              <td class="p-3">{{ t.nombre_paciente }}</td>
+              <td class="p-3">{{ t.nombre_usuario }}</td>
+              <td class="p-3">{{ t.fecha_inicio }}</td>
+              <td class="p-3">{{ t.fecha_fin }}</td>
+              <td class="p-3">{{ t.descripcion }}</td>
+              <td class="p-3 flex justify-center gap-3">
+                <NuxtLink
+                  :to="`/tratamientos/${t.id_tratamiento}`"
+                  class="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  ✏️ Editar
+                </NuxtLink>
+                <button
+                  @click="eliminar(t.id_tratamiento)"
+                  class="text-red-500 hover:text-red-700 font-medium"
+                >
+                  🗑️ Eliminar
+                </button>
+              </td>
+            </tr>
+
+            <tr v-if="tratamientos.length === 0">
+              <td colspan="7" class="p-6 text-center text-gray-500">
+                No hay tratamientos registrados aún 🐶
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue"
+
 const tratamientos = ref([])
 const pacientes = ref([])
 const usuarios = ref([])
@@ -52,13 +95,10 @@ const cargarUsuarios = async () => {
 }
 
 onMounted(async () => {
-  // Cargar pacientes y usuarios
   await Promise.all([cargarPacientes(), cargarUsuarios()])
 
-  // Cargar tratamientos
   const t = await $fetch("/api/tratamientos")
 
-  // Enriquecer tratamientos
   tratamientos.value = t.map(trat => {
     const paciente = pacientes.value.find(pa => pa.id_paciente === trat.id_paciente)
     const usuario = usuarios.value.find(us => us.id_usuario === trat.id_usuario)
