@@ -111,7 +111,7 @@
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "#imports"
 import { useSupabaseUser } from "#imports"
-import ModalError from "@/components/ModalError.vue"
+import ModalError from "@/components/modalError.vue"
 
 const route = useRoute()
 const router = useRouter()
