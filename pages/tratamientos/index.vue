@@ -25,12 +25,16 @@
               <th class="p-3">ID</th>
               <th class="p-3">Paciente</th>
               <th class="p-3">Usuario</th>
-              <th class="p-3">Fecha inicio</th>
-              <th class="p-3">Fecha fin</th>
+              <th class="p-3">Tipo</th>
               <th class="p-3">Descripción</th>
+              <th class="p-3">Gravedad</th>
+              <th class="p-3">Estado</th>
+              <th class="p-3">Costo (Bs)</th>
+              <th class="p-3">Fecha inicio</th>
               <th class="p-3 text-center">Acciones</th>
             </tr>
           </thead>
+
           <tbody>
             <tr
               v-for="t in tratamientos"
@@ -40,9 +44,33 @@
               <td class="p-3 font-medium">{{ t.id_tratamiento }}</td>
               <td class="p-3">{{ t.nombre_paciente }}</td>
               <td class="p-3">{{ t.nombre_usuario }}</td>
-              <td class="p-3">{{ t.fecha_inicio }}</td>
-              <td class="p-3">{{ t.fecha_fin }}</td>
+              <td class="p-3">{{ t.tipo }}</td>
               <td class="p-3">{{ t.descripcion }}</td>
+              <td class="p-3 capitalize">
+                <span
+                  :class="{
+                    'text-green-600 font-semibold': t.gravedad === 'leve',
+                    'text-yellow-600 font-semibold': t.gravedad === 'moderada',
+                    'text-red-600 font-semibold': t.gravedad === 'grave'
+                  }"
+                >
+                  {{ t.gravedad }}
+                </span>
+              </td>
+              <td class="p-3 capitalize">
+                <span
+                  :class="{
+                    'bg-yellow-100 text-yellow-800 px-2 py-1 rounded-xl text-sm font-medium': t.estado === 'pendiente',
+                    'bg-green-100 text-green-800 px-2 py-1 rounded-xl text-sm font-medium': t.estado === 'completado',
+                    'bg-gray-100 text-gray-700 px-2 py-1 rounded-xl text-sm font-medium': t.estado === 'cancelado'
+                  }"
+                >
+                  {{ t.estado }}
+                </span>
+              </td>
+              <td class="p-3">{{ t.costo.toFixed(2) }}</td>
+              <td class="p-3">{{ new Date(t.fecha_inicio).toLocaleDateString() }}</td>
+
               <td class="p-3 flex justify-center gap-3">
                 <NuxtLink
                   :to="`/tratamientos/${t.id_tratamiento}`"
@@ -60,7 +88,7 @@
             </tr>
 
             <tr v-if="tratamientos.length === 0">
-              <td colspan="7" class="p-6 text-center text-gray-500">
+              <td colspan="10" class="p-6 text-center text-gray-500">
                 No hay tratamientos registrados aún 🐶
               </td>
             </tr>

@@ -129,7 +129,7 @@ const guardarCirugia = async () => {
   const veinteDiasDespues = new Date(hoy)
   veinteDiasDespues.setDate(veinteDiasDespues.getDate() + 20)
 
-  if (fechaSeleccionada < hoy) {
+  if (fechaSeleccionada <= hoy) {
     showModal('La fecha no puede ser anterior a hoy.', '❌ Error')
     return
   }

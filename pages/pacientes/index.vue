@@ -93,7 +93,7 @@
         v-if="modalVisible"
         class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 backdrop-blur-sm"
       >
-        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200">
+        <div class="relative bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200">
           <button
             @click="cerrarModal"
             class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl leading-none"
