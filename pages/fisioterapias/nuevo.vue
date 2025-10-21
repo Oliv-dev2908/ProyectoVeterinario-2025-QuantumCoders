@@ -163,9 +163,11 @@ const mostrarModal = (titulo, mensaje) => {
 }
 
 // 🔍 Validaciones del formulario
+// 🔍 Validaciones del formulario
 const validarFormulario = () => {
   // Paciente
-  if (!form.id_paciente) return mostrarModal("⚠️ Atención", "Debe seleccionar un paciente.")
+  if (!form.id_paciente)
+    return mostrarModal("⚠️ Atención", "Debe seleccionar un paciente.")
 
   // Fecha
   const hoy = new Date()
@@ -182,10 +184,60 @@ const validarFormulario = () => {
 
   // Procedimiento
   const texto = form.procedimiento.trim()
-  if (!texto) return mostrarModal("⚠️ Atención", "Debe ingresar una descripción del procedimiento.")
+  if (!texto)
+    return mostrarModal("⚠️ Atención", "Debe ingresar una descripción del procedimiento.")
+
+  // Longitud mínima y máxima
+  if (texto.length < 10)
+    return mostrarModal("⚠️ Texto demasiado corto", "El procedimiento debe tener al menos 10 caracteres.")
+  if (texto.length > 200)
+    return mostrarModal("⚠️ Texto demasiado largo", "El procedimiento no puede superar los 200 caracteres.")
 
   // Palabras ofensivas o sospechosas
-  const ofensivas = /(tonto|idiota|mierda|puto|puta|imbecil|estúpido|maldito)/i
+  const ofensivas = new RegExp(
+  "\\b(" +
+    [
+      // 🧠 Lenguaje ofensivo general
+      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
+      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
+      "boludo", "mierda", "maldito", "malparido", "culero", "cabrón", "cabron", "zorra",
+      "puta", "puto", "putita", "putilla", "putilla", "maricon", "maricón", "marica",
+      "maricona", "lesbiana", "gay", "homosexual", "negro", "negrata", "chino", "gordo",
+      "cerdo", "perra", "perro", "infeliz", "babosa", "asqueroso", "asquerosa", "menso",
+      "estupida", "idiotez", "inutil", "zopenco", "tarada", "huevon", "huevón", "hueva",
+      "huevada", "cojudo", "cojud@", "pajero", "pajera", "verga", "vergazo", "chingar",
+      "chingada", "chingado", "chingón", "chingona", "malnacido", "malnacida", "desgraciado",
+      "desgraciada", "imbécil", "bastardo", "bastarda", "estúpido", "maldita sea",
+      "vete a la mierda", "vete al diablo", "carajo", "joder", "hostia", "polla", "culo",
+      "coño", "cagada", "cagar", "me cago", "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta",
+      "t0nto", "put@", "estup1do", "imb3c1l",
+
+      // 💬 Palabras ofensivas en inglés
+      "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "cunt", "faggot",
+      "slut", "whore", "retard", "stupid", "idiot", "moron", "dumbass", "jerk", "loser",
+      "son of a bitch", "motherfucker", "bullshit", "suck my", "damn", "bloody hell",
+
+      // 🧨 Patrones de ataques XSS o inyección
+      "<script>", "<\\/script>", "javascript:", "onerror=", "onload=", "alert\\(", "prompt\\(",
+      "confirm\\(", "document\\.cookie", "document\\.write", "<iframe", "<img", "<svg",
+      "<embed", "<object", "<link", "<meta", "<base", "innerHTML", "eval\\(", "fetch\\(",
+      "XMLHttpRequest", "window\\.location", "window\\.open", "<style>", "<marquee>",
+
+      // 💣 SQL Injection y comandos peligrosos
+      "DROP\\s+TABLE", "DELETE\\s+FROM", "INSERT\\s+INTO", "SELECT\\s+\\*", "UPDATE\\s+SET",
+      "TRUNCATE", "ALTER\\s+TABLE", "CREATE\\s+DATABASE", "UNION\\s+SELECT", "OR\\s+1=1",
+      "--", ";--", ";", "'\\s*--", "'\\s*#", "\"\\s*--", "\"\\s*#", "\\*\\/\\*", "xp_cmdshell",
+      "exec\\s+", "execute\\s+", "sp_executesql", "information_schema", "sysobjects", "syscolumns",
+
+      // ⚠️ Patrones sospechosos y repetitivos
+      "/ {2,}/",
+      "(.){50,}",   // cadenas excesivamente largas sin espacios (ataques de buffer)
+      "(%27)|(')|(%2D%2D)|(--)|(%23)|(#)", // variantes de inyección
+      "(\\b(select|update|delete|insert|drop|alter|create)\\b\\s+.+\\b(from|into|table)\\b)"
+    ].join("|") +
+  ")\\b",
+  "i"
+);
   const sqlInyecciones = /(drop\s|delete\s|insert\s|update\s|select\s|--|;|\/\*|\*\/)/i
   const repeticiones = /(.)\1{4,}/
 

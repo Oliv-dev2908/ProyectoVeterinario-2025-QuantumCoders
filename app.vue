@@ -26,6 +26,6 @@ import { useSidebar } from '~/composables/useSidebar' // ✅ usamos el nuevo com
 const { isCollapsed } = useSidebar() // ✅ reemplaza a useSidebarStore()
 const route = useRoute()
 
-const noSidebarRoutes = ['/login', '/signup', '/no-permission']
+const noSidebarRoutes = ['/login', '/signUp', '/no-permission']
 const showSidebar = computed(() => !noSidebarRoutes.includes(route.path))
 </script>
