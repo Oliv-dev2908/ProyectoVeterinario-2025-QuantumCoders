@@ -143,19 +143,47 @@ const handleModalClose = () => {
 
 
 const validarTexto = (texto) => {
-  if (!texto) return true
-  const patronesMaliciosos = [
-    /select|insert|update|delete|drop|union|--/i, // SQL
-    /<script.*?>.*?<\/script>/i // XSS
-  ]
-  const palabrasOfensivas = ["tonto", "idiota", "estúpido", "mierda", "puta"]
-  if (patronesMaliciosos.some(p => p.test(texto))) return false
-  const repetidos = /(.)\1{4,}/ // 5 caracteres iguales seguidos
-  if (repetidos.test(texto)) return false
-  if (palabrasOfensivas.some(p => texto.toLowerCase().includes(p))) return false
-  return true
-}
+  if (!texto) return { valido: true };
 
+  // Patrones de inyección y XSS
+  const patronesMaliciosos = [
+    { regex: /select|insert|update|delete|drop|union|--/i, tipo: "SQL Injection" },
+    { regex: /<script.*?>.*?<\/script>/i, tipo: "XSS" }
+  ];
+
+  for (let p of patronesMaliciosos) {
+    if (p.regex.test(texto)) return { valido: false, tipo: p.tipo };
+  }
+
+  // Repeticiones
+  const repetidos = /(.)\1{4,}/; // 5 caracteres iguales seguidos
+  if (repetidos.test(texto)) return { valido: false, tipo: "Repetición excesiva de caracteres" };
+
+  // Palabras ofensivas
+  const palabrasOfensivas = new RegExp(
+    "\\b(" +
+    [
+      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
+      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
+      "boludo", "mierda", "maldito", "malparido", "culero", "cabr[oó]n", "zorra",
+      "puta", "puto", "putita", "putilla", "maric[oó]n", "marica", "maricona", "lesbiana",
+      "gay", "homosexual", "negro", "negrata", "chino", "gordo", "cerdo", "perra", "perro",
+      "infeliz", "babosa", "asqueroso", "asquerosa", "menso", "estupida", "idiotez", "inutil",
+      "zopenco", "tarada", "huevon", "huev[oó]n", "hueva", "huevada", "cojudo", "cojud@",
+      "pajero", "pajera", "verga", "vergazo", "chingar", "chingada", "chingado", "ching[oó]n",
+      "chingona", "malnacido", "malnacida", "desgraciado", "desgraciada", "imb[eé]cil",
+      "bastardo", "bastarda", "est[uú]pido", "maldita sea", "vete a la mierda", "vete al diablo",
+      "carajo", "joder", "hostia", "polla", "culo", "co[oó]", "cagada", "cagar", "me cago",
+      "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta", "t0nto", "put@", "estup1do", "imb3c1l"
+    ].join("|") +
+    ")\\b",
+    "i"
+  );
+
+  if (palabrasOfensivas.test(texto)) return { valido: false, tipo: "Palabra ofensiva o inapropiada" };
+
+  return { valido: true };
+};
 
 
 onMounted(async () => {
@@ -193,7 +221,7 @@ const guardarConsulta = async () => {
       return
     }
 
-    if(!form.value.motivo){
+    if (!form.value.motivo) {
       modalTitle.value = "⚠️ Error"
       modalMessage.value = "El motivo no puede estar vacio."
       modalVisible.value = true
@@ -201,15 +229,18 @@ const guardarConsulta = async () => {
     }
 
     // Validación campos de texto
-    const camposTexto = ["motivo", "signosclinicos", "curso", "diagnosticopresuntivo", "observaciones", "condicion"]
+    const camposTexto = ["motivo", "signosclinicos", "curso", "diagnosticopresuntivo", "observaciones", "condicion"];
+
     for (let campo of camposTexto) {
-      if (!validarTexto(form.value[campo])) {
-        modalTitle.value = "⚠️ Error"
-        modalMessage.value = `El campo "${campo}" contiene caracteres no permitidos o repetitivos.`
-        modalVisible.value = true
-        return
+      const resultado = validarTexto(form.value[campo]);
+      if (!resultado.valido) {
+        modalTitle.value = "⚠️ Error";
+        modalMessage.value = `El campo "${campo}" contiene contenido no permitido: ${resultado.tipo}.`;
+        modalVisible.value = true;
+        return;
       }
     }
+
 
     // Validación fecha próxima consulta
     if (form.value.fechaproxconsulta) {
@@ -240,6 +271,99 @@ const guardarConsulta = async () => {
       }
     }
 
+    if (form.value.motivo.length < 10) {
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "El motivo no puede tener menos de 10 caracteres"
+      modalVisible.value = true
+      return
+    }
+
+    if (form.value.motivo.length > 200) {
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "El motivo no puede tener mas de 200 caracteres"
+      modalVisible.value = true
+      return
+    }
+
+    if (form.value.signosclinicos) {
+      if (form.value.signosclinicos.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los signos clinicos no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.motivo.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los signos clinicos no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.curso) {
+      if (form.value.curso.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Curso no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.curso.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Curso no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.diagnosticopresuntivo) {
+      if (form.value.diagnosticopresuntivo.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los diagnosticos presuntivos no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.diagnosticopresuntivo.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los diagnosticos presuntivos no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.observaciones) {
+      if (form.value.observaciones.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Las observaciones no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.observaciones.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Las observaciones no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.condicion) {
+      if (form.value.condicion.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La condicion no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.condicion.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La condicion no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
     // Preparar envío
     const consultaBody = { ...form.value }
     if (!consultaBody.fechaproxconsulta) delete consultaBody.fechaproxconsulta

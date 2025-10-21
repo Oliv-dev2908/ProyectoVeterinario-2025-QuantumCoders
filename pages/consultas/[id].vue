@@ -116,6 +116,7 @@ import ModalError from "@/components/modalError.vue"
 const route = useRoute()
 const router = useRouter()
 const user = useSupabaseUser()
+const usuarios = ref([]) // 🔹 declarar usuarios
 
 const pacientes = ref([])
 const nombreUsuario = ref("Cargando...")
@@ -147,28 +148,27 @@ const handleModalClose = () => {
 onMounted(async () => {
   const id = route.params.id
   try {
+    // Cargar pacientes y usuarios
     pacientes.value = await $fetch("/api/pacientes")
+    usuarios.value = await $fetch("/api/user") // 🔹 añadimos esto
+
+    // Cargar consulta actual
     const data = await $fetch(`/api/consultas/${id}`)
     form.value = {
       ...data,
       id_cita: data.id_cita || null,
       fecha: new Date(data.fecha).toISOString().slice(0, 16),
-      fechaproxconsulta: data.fechaproxconsulta ? data.fechaproxconsulta.slice(0, 16) : ""
+      fechaproxconsulta: data.fechaproxconsulta
+        ? new Date(data.fechaproxconsulta).toISOString().slice(0, 16)
+        : ""
     }
 
-    // 🔹 Convertir formato de fecha a 'YYYY-MM-DDTHH:mm' (para datetime-local)
-    if (form.value.fechaproxconsulta) {
-      const fecha = new Date(form.value.fechaproxconsulta)
-      form.value.fechaproxconsulta = fecha.toISOString().slice(0, 16)
-    }
+    // 🔹 Buscar nombre del usuario que registró la consulta
+    const usuario = usuarios.value.find(
+      (u) => u.id_usuario === data.id_usuario
+    )
+    nombreUsuario.value = usuario ? usuario.nombre : "Desconocido"
 
-    if (user.value?.id) {
-      const usuarioData = await $fetch(`/api/user/${user.value.id}`)
-      form.value.id_usuario = usuarioData.id_usuario
-      nombreUsuario.value = usuarioData.nombre || "Usuario desconocido"
-    } else {
-      nombreUsuario.value = "No logueado"
-    }
   } catch (err) {
     console.error("Error cargando consulta:", err)
     modalTitle.value = "⚠️ Error"
@@ -177,20 +177,49 @@ onMounted(async () => {
   }
 })
 
-// 🔒 Validaciones iguales al formulario de crear
+
 const validarTexto = (texto) => {
-  if (!texto) return true
+  if (!texto) return { valido: true };
+
+  // Patrones de inyección y XSS
   const patronesMaliciosos = [
-    /select|insert|update|delete|drop|union|--/i,
-    /<script.*?>.*?<\/script>/i
-  ]
-  const palabrasOfensivas = ["tonto", "idiota", "estúpido", "mierda", "puta"]
-  if (patronesMaliciosos.some(p => p.test(texto))) return false
-  const repetidos = /(.)\1{4,}/
-  if (repetidos.test(texto)) return false
-  if (palabrasOfensivas.some(p => texto.toLowerCase().includes(p))) return false
-  return true
-}
+    { regex: /select|insert|update|delete|drop|union|--/i, tipo: "SQL Injection" },
+    { regex: /<script.*?>.*?<\/script>/i, tipo: "XSS" }
+  ];
+
+  for (let p of patronesMaliciosos) {
+    if (p.regex.test(texto)) return { valido: false, tipo: p.tipo };
+  }
+
+  // Repeticiones
+  const repetidos = /(.)\1{4,}/; // 5 caracteres iguales seguidos
+  if (repetidos.test(texto)) return { valido: false, tipo: "Repetición excesiva de caracteres" };
+
+  // Palabras ofensivas
+  const palabrasOfensivas = new RegExp(
+    "\\b(" +
+    [
+      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
+      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
+      "boludo", "mierda", "maldito", "malparido", "culero", "cabr[oó]n", "zorra",
+      "puta", "puto", "putita", "putilla", "maric[oó]n", "marica", "maricona", "lesbiana",
+      "gay", "homosexual", "negro", "negrata", "chino", "gordo", "cerdo", "perra", "perro",
+      "infeliz", "babosa", "asqueroso", "asquerosa", "menso", "estupida", "idiotez", "inutil",
+      "zopenco", "tarada", "huevon", "huev[oó]n", "hueva", "huevada", "cojudo", "cojud@",
+      "pajero", "pajera", "verga", "vergazo", "chingar", "chingada", "chingado", "ching[oó]n",
+      "chingona", "malnacido", "malnacida", "desgraciado", "desgraciada", "imb[eé]cil",
+      "bastardo", "bastarda", "est[uú]pido", "maldita sea", "vete a la mierda", "vete al diablo",
+      "carajo", "joder", "hostia", "polla", "culo", "co[oó]", "cagada", "cagar", "me cago",
+      "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta", "t0nto", "put@", "estup1do", "imb3c1l"
+    ].join("|") +
+    ")\\b",
+    "i"
+  );
+
+  if (palabrasOfensivas.test(texto)) return { valido: false, tipo: "Palabra ofensiva o inapropiada" };
+
+  return { valido: true };
+};
 
 const actualizarConsulta = async () => {
   try {
@@ -203,15 +232,17 @@ const actualizarConsulta = async () => {
 
     const camposTexto = ["motivo", "signosclinicos", "curso", "diagnosticopresuntivo", "observaciones", "condicion"]
     for (let campo of camposTexto) {
-      if (!validarTexto(form.value[campo])) {
-        modalTitle.value = "⚠️ Error"
-        modalMessage.value = `El campo "${campo}" contiene caracteres no permitidos o repetitivos.`
-        modalVisible.value = true
-        return
+      const resultado = validarTexto(form.value[campo]);
+      if (!resultado.valido) {
+        modalTitle.value = "⚠️ Error";
+        modalMessage.value = `El campo "${campo}" contiene contenido no permitido: ${resultado.tipo}.`;
+        modalVisible.value = true;
+        return;
       }
     }
 
-    if(!form.value.motivo){
+
+    if (!form.value.motivo) {
       modalTitle.value = "⚠️ Error"
       modalMessage.value = "El motivo no puede estar vacio."
       modalVisible.value = true
@@ -244,6 +275,102 @@ const actualizarConsulta = async () => {
         return
       }
     }
+
+    if (form.value.motivo.length < 10) {
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "El motivo no puede tener menos de 10 caracteres"
+      modalVisible.value = true
+      return
+    }
+
+    if (form.value.motivo.length > 200) {
+      modalTitle.value = "⚠️ Error"
+      modalMessage.value = "El motivo no puede tener mas de 200 caracteres"
+      modalVisible.value = true
+      return
+    }
+
+    if (form.value.signosclinicos) {
+      if (form.value.signosclinicos.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los signos clinicos no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.motivo.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los signos clinicos no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.curso) {
+      if (form.value.curso.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Curso no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.curso.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Curso no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.diagnosticopresuntivo) {
+      if (form.value.diagnosticopresuntivo.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los diagnosticos presuntivos no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.diagnosticopresuntivo.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Los diagnosticos presuntivos no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.observaciones) {
+      if (form.value.observaciones.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Las observaciones no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.observaciones.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "Las observaciones no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+    if (form.value.condicion) {
+      if (form.value.condicion.length < 10) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La condicion no puede tener menos de 10 caracteres"
+        modalVisible.value = true
+        return
+      }
+
+      if (form.value.condicion.length > 200) {
+        modalTitle.value = "⚠️ Error"
+        modalMessage.value = "La condicion no puede tener mas de 200 caracteres"
+        modalVisible.value = true
+        return
+      }
+    }
+
+
 
     // Actualizar consulta
     const body = { ...form.value }
