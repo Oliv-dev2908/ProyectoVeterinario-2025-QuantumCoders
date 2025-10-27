@@ -241,6 +241,11 @@ const validarTexto = (campo, nombre, min, max) => {
     return `${nombre} debe tener entre ${min} y ${max} caracteres.`;
   }
 
+    // Verificar si contiene números
+  if (/\d/.test(campo)) {
+    return `${nombre} no puede contener números.`;
+  }
+
   if (contienePatronesProhibidos(campo)) {
     return `${nombre} no puede contener números ni caracteres especiales.`;
   }
