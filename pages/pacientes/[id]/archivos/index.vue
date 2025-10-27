@@ -32,14 +32,14 @@
               <div class="flex flex-wrap gap-2">
                 <a
                   :href="file.url_publica"
-                  target="_blank"
+                  download
                   class="bg-yellow-500 text-white px-4 py-1.5 rounded-lg hover:bg-yellow-600 transition"
                 >
                   Previsualizar
                 </a>
                 <a
                   :href="file.url_publica"
-                  download
+                  @click.prevent="descargarArchivo(file.url_publica)"
                   class="bg-green-500 text-white px-4 py-1.5 rounded-lg hover:bg-green-600 transition"
                 >
                   Descargar
@@ -83,6 +83,17 @@ async function getPaciente() {
     pacienteNombre.value = ''
   }
 }
+function descargarArchivo(url) {
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      const enlace = document.createElement('a');
+      enlace.href = URL.createObjectURL(blob);
+      enlace.download = url.split('/').pop();
+      enlace.click();
+      URL.revokeObjectURL(enlace.href);
+    });
+}
 
 async function listFiles() {
   try {
@@ -94,8 +105,10 @@ async function listFiles() {
     files.value = []
   }
 }
-
 async function deleteFile(fileId) {
+  const confirmDelete = confirm('¿Seguro que deseas eliminar este archivo?')
+  if (!confirmDelete) return
+
   try {
     const result = await $fetch(
       `https://proyectoveterinario-2025-quantumcoders.onrender.com/api/v1/expedientes/${fileId}`,
@@ -107,6 +120,7 @@ async function deleteFile(fileId) {
     alert(error?.message || 'Error al eliminar el archivo')
   }
 }
+
 
 onMounted(() => {
   getPaciente()

@@ -141,30 +141,48 @@ async function assignFileToPaciente(file) {
 }
 
 async function previewFile(filename) {
-  const encodedFilename = encodeURIComponent(filename)
-  const { url, message } = await $fetch(`/api/expedientes/${encodedFilename}`)
-  if (!url) return alert(message || 'Error al generar la URL de previsualización')
-  window.open(`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`, '_blank')
+  try {
+    const encodedFilename = encodeURIComponent(filename)
+    const { url, message } = await $fetch(`/api/expedientes/${encodedFilename}`)
+    if (!url) return alert(message || 'Error al obtener la URL del archivo')
+    window.open(url, '_blank') // abre directamente el archivo
+  } catch (error) {
+    alert(error?.message || 'Error al previsualizar el archivo')
+  }
 }
 
 async function downloadFileDirect(filename) {
-  const encodedFilename = encodeURIComponent(filename)
-  const { url, message } = await $fetch(`/api/expedientes/${encodedFilename}`)
-  if (!url) return alert(message || 'Error al generar la URL de descarga')
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+  try {
+    const encodedFilename = encodeURIComponent(filename)
+    const { url, message } = await $fetch(`/api/expedientes/${encodedFilename}`)
+    if (!url) return alert(message || 'Error al obtener la URL del archivo')
+
+    const response = await fetch(url)
+    const blob = await response.blob()
+    const enlace = document.createElement('a')
+    enlace.href = URL.createObjectURL(blob)
+    enlace.download = filename
+    enlace.click()
+    URL.revokeObjectURL(enlace.href)
+  } catch (error) {
+    alert(error?.message || 'Error al descargar el archivo')
+  }
 }
 
 async function deleteFile(filename) {
-  const encodedFilename = encodeURIComponent(filename)
-  const result = await $fetch(`/api/expedientes/${encodedFilename}`, { method: 'DELETE' })
-  if (result.message) alert(result.message)
-  listFiles()
+  const confirmDelete = confirm(`¿Seguro que deseas eliminar el archivo "${filename}"?`)
+  if (!confirmDelete) return // si el usuario cancela, no hace nada
+
+  try {
+    const encodedFilename = encodeURIComponent(filename)
+    const result = await $fetch(`/api/expedientes/${encodedFilename}`, { method: 'DELETE' })
+    if (result.message) alert(result.message)
+    listFiles()
+  } catch (error) {
+    alert(error?.message || 'Error al eliminar el archivo')
+  }
 }
+
 
 onMounted(() => {
   listFiles()
