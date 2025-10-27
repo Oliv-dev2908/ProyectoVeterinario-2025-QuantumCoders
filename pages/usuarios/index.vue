@@ -22,32 +22,19 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="u in usuarios"
-              :key="u.supabase_user_id"
-              class="border-t hover:bg-teal-50 transition"
-            >
+            <tr v-for="u in usuariosFiltrados" :key="u.supabase_user_id" class="border-t hover:bg-teal-50 transition">
               <td class="p-3">{{ u.nombre }}</td>
               <td class="p-3">{{ u.email }}</td>
               <td class="p-3">
-                <select
-                  v-model="u.rol_id"
-                  class="border rounded px-2 py-1 w-full"
-                >
-                  <option
-                    v-for="rol in roles"
-                    :key="rol.id_rol"
-                    :value="rol.id_rol"
-                  >
+                <select v-model="u.rol_id" class="border rounded px-2 py-1 w-full">
+                  <option v-for="rol in roles" :key="rol.id_rol" :value="rol.id_rol">
                     {{ rol.nombre_rol }}
                   </option>
                 </select>
               </td>
               <td class="p-3 flex justify-center gap-3">
-                <button
-                  class="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:scale-105 transition"
-                  @click="asignarRol(u)"
-                >
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:scale-105 transition"
+                  @click="asignarRol(u)">
                   Guardar
                 </button>
               </td>
@@ -66,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed, watch } from "vue"
 
 const usuarios = ref([])
 const roles = ref([
@@ -78,12 +65,21 @@ const roles = ref([
   { id_rol: 7, nombre_rol: "Recepcionista" }
 ])
 
+// 🔹 Usuario logueado
+const user = useSupabaseUser()
+
 onMounted(async () => {
   try {
     usuarios.value = await $fetch("/api/user")
   } catch (err) {
     console.error("Error cargando usuarios:", err)
   }
+})
+
+// 🔹 Computed para filtrar al usuario logueado
+const usuariosFiltrados = computed(() => {
+  if (!user.value?.id) return usuarios.value
+  return usuarios.value.filter(u => u.supabase_user_id !== user.value.id)
 })
 
 const asignarRol = async (usuario) => {

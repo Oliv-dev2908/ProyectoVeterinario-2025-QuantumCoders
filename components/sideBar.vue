@@ -1,10 +1,8 @@
 <template>
-  <aside
-    :class="[ 
-      'fixed top-0 left-0 h-screen bg-white shadow-xl border-r border-gray-100 flex flex-col transition-all duration-300 ease-in-out z-50',
-      isCollapsed ? 'w-20' : 'w-64'
-    ]"
-  >
+  <aside :class="[
+    'fixed top-0 left-0 h-screen bg-white shadow-xl border-r border-gray-100 flex flex-col transition-all duration-300 ease-in-out z-50',
+    isCollapsed ? 'w-20' : 'w-64'
+  ]">
     <!-- 🐾 Encabezado -->
     <div class="flex items-center justify-between p-4 border-b border-gray-100 bg-white sticky top-0 z-10">
       <div class="flex items-center gap-2">
@@ -19,29 +17,24 @@
     </div>
 
     <!-- 🌿 Menú -->
-    <nav class="flex-1 px-3 py-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-300 scrollbar-track-gray-100">
-      <div
-        v-for="item in filteredMenuItems"
-        :key="item.label"
-        @click="goTo(item.path)"
-        :class="[
-          'flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200',
-          selected === item.label
+    <nav
+      class="flex-1 px-3 py-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-300 scrollbar-track-gray-100">
+      <div v-for="item in filteredMenuItems" :key="item.label" @click="goTo(item.path)"
+        :title="isCollapsed ? item.label : ''" :class="[
+          'flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 relative',
+          isActive(item.path)
             ? 'bg-emerald-100 text-emerald-700 font-medium'
             : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
-        ]"
-      >
+        ]">
         <i :class="['fas', item.icon, 'w-6 text-center']"></i>
         <span v-if="!isCollapsed">{{ item.label }}</span>
       </div>
+
     </nav>
 
     <!-- ⚙️ Footer -->
     <div class="p-4 border-t border-gray-100 bg-white sticky bottom-0 z-10">
-      <div
-        class="flex items-center gap-3 text-gray-500 hover:text-red-500 cursor-pointer transition"
-        @click="signOut"
-      >
+      <div class="flex items-center gap-3 text-gray-500 hover:text-red-500 cursor-pointer transition" @click="signOut">
         <i class="fas fa-sign-out-alt w-6 text-center"></i>
         <span v-if="!isCollapsed">Cerrar sesión</span>
       </div>
@@ -64,6 +57,11 @@ const user = useSupabaseUser()
 const { getUserRole } = useUser()
 const userRole = ref(null)
 const { isCollapsed, toggleSidebar } = useSidebar()
+const route = useRoute()
+
+const isActive = (path) => {
+  return route.path === path || route.path.startsWith(path + '/')
+}
 
 const goTo = (path) => router.push(path)
 
@@ -132,6 +130,7 @@ onMounted(async () => {
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
   border-radius: 9999px;
 }

@@ -9,10 +9,8 @@
           <p class="text-gray-500 text-sm mt-1">Gestión de procedimientos quirúrgicos veterinarios</p>
         </div>
 
-        <router-link
-          to="/cirugias/nuevo"
-          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow hover:scale-105 transition"
-        >
+        <router-link to="/cirugias/nuevo"
+          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow hover:scale-105 transition">
           ➕ Nueva Cirugía
         </router-link>
       </div>
@@ -22,36 +20,26 @@
         <table class="min-w-full text-left text-gray-700">
           <thead>
             <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
-              <th class="p-3">ID</th>
               <th class="p-3">Paciente</th>
-              <th class="p-3">Usuario</th>
+              <th class="p-3">Médico</th>
               <th class="p-3">Fecha</th>
               <th class="p-3">Descripción</th>
               <th class="p-3 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="c in cirugias"
-              :key="c.id_cirugia"
-              class="border-t hover:bg-teal-50 transition"
-            >
-              <td class="p-3 font-medium">{{ c.id_cirugia }}</td>
+            <tr v-for="c in cirugias" :key="c.id_cirugia" class="border-t hover:bg-teal-50 transition">
               <td class="p-3">{{ pacientesMap[c.id_paciente] || c.id_paciente }}</td>
               <td class="p-3">{{ usuariosMap[c.id_usuario] || c.id_usuario }}</td>
               <td class="p-3">{{ formatFecha(c.fecha) }}</td>
-              <td class="p-3">{{ c.descripcion }}</td>
+              <td class="p-3 max-w-xs break-words whitespace-normal">{{ c.descripcion }}</td>
+
+
               <td class="p-3 flex justify-center gap-3">
-                <router-link
-                  :to="`/cirugias/${c.id_cirugia}`"
-                  class="text-blue-600 hover:text-blue-800 font-medium"
-                >
+                <router-link :to="`/cirugias/${c.id_cirugia}`" class="text-blue-600 hover:text-blue-800 font-medium">
                   ✏️ Editar
                 </router-link>
-                <button
-                  @click="eliminarCirugia(c.id_cirugia)"
-                  class="text-red-500 hover:text-red-700 font-medium"
-                >
+                <button @click="eliminarCirugia(c.id_cirugia)" class="text-red-500 hover:text-red-700 font-medium">
                   🗑️ Eliminar
                 </button>
               </td>
@@ -80,9 +68,12 @@ const usuariosMap = ref({})
 // 📅 Formatear fecha
 const formatFecha = (fecha) => {
   if (!fecha) return '—'
-  const d = new Date(fecha)
-  return d.toLocaleDateString('es-BO', { year: 'numeric', month: 'short', day: 'numeric' })
+
+  // Extraer año, mes y día directamente del string
+  const [year, month, day] = fecha.split('-')
+  return `${day}/${month}/${year}` // formato DD/MM/YYYY
 }
+
 
 // 🔄 Cargar cirugías, pacientes y usuarios
 onMounted(async () => {

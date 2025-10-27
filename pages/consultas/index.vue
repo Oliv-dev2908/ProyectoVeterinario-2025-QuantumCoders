@@ -25,7 +25,7 @@
           <thead>
             <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
               <th class="p-3">Paciente</th>
-              <th class="p-3">Usuario</th>
+              <th class="p-3">Médico</th>
               <th class="p-3">Motivo</th>
               <th class="p-3">Fecha</th>
               <th class="p-3">Próxima cita</th>
@@ -42,11 +42,11 @@
               <td class="p-3">{{ c.nombre_usuario }}</td>
               <td class="p-3">{{ c.motivo }}</td>
               <td class="p-3">
-                {{ new Date(c.fecha).toLocaleDateString('es-BO', { year: 'numeric', month: 'short', day: 'numeric' }) }}
+                {{ new Date(c.fecha).toLocaleDateString( { year: 'numeric', month: 'short', day: 'numeric' }) }}
               </td>
               <td class="p-3">
                 <span v-if="c.fechaproxconsulta">
-                  {{ new Date(c.fechaproxconsulta).toLocaleDateString('es-BO', { year: 'numeric', month: 'short', day: 'numeric' }) }}
+                  {{ new Date(c.fechaproxconsulta).toLocaleDateString( { year: 'numeric', month: 'short', day: 'numeric' }) }}
                 </span>
                 <span v-else>—</span>
               </td>

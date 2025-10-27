@@ -8,10 +8,8 @@
           <p class="text-gray-500 text-sm mt-1">Gestión integral de pacientes veterinarios</p>
         </div>
 
-        <router-link
-          to="/pacientes/nuevo"
-          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition"
-        >
+        <router-link to="/pacientes/nuevo"
+          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition">
           ➕ Nuevo Paciente
         </router-link>
       </div>
@@ -21,7 +19,6 @@
         <table class="min-w-full text-left text-gray-700">
           <thead>
             <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
-              <th class="p-3">ID</th>
               <th class="p-3">Nombre</th>
               <th class="p-3">Especie</th>
               <th class="p-3">Raza</th>
@@ -32,47 +29,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="p in pacientes"
-              :key="p.id_paciente"
-              class="border-t hover:bg-teal-50 transition"
-            >
-              <td class="p-3 font-medium">{{ p.id_paciente }}</td>
+            <tr v-for="p in pacientes" :key="p.id_paciente" class="border-t hover:bg-teal-50 transition">
               <td class="p-3">{{ p.nombre }}</td>
               <td class="p-3">{{ p.especie }}</td>
               <td class="p-3">{{ p.raza }}</td>
               <td class="p-3">{{ p.edad }}</td>
               <td class="p-3">{{ p.sexo ? 'Macho' : 'Hembra' }}</td>
-              <td class="p-3">{{ p.id_cliente }}</td>
+              <td class="p-3">{{ p.cliente_nombre + " " + p.cliente_apellido }}</td>
               <td class="p-3 flex justify-center gap-2 flex-wrap">
-                <button
-                  @click="abrirModal(p)"
-                  class="text-green-600 hover:text-green-800 font-medium"
-                >
+                <button @click="abrirModal(p)" class="text-green-600 hover:text-green-800 font-medium">
                   👁️ Ver
                 </button>
-                <router-link
-                  :to="`/pacientes/${p.id_paciente}`"
-                  class="text-blue-600 hover:text-blue-800 font-medium"
-                >
+                <router-link :to="`/pacientes/${p.id_paciente}`" class="text-blue-600 hover:text-blue-800 font-medium">
                   ✏️ Editar
                 </router-link>
-                <router-link
-                  :to="`/pacientes/${p.id_paciente}/archivos`"
-                  class="text-purple-600 hover:text-purple-800 font-medium"
-                >
+                <router-link :to="`/pacientes/${p.id_paciente}/archivos`"
+                  class="text-purple-600 hover:text-purple-800 font-medium">
                   📁 Expediente
                 </router-link>
-                <button
-                  @click="irAReportes(p.id_paciente)"
-                  class="text-teal-600 hover:text-teal-800 font-medium"
-                >
+                <button @click="irAReportes(p.id_paciente)" class="text-teal-600 hover:text-teal-800 font-medium">
                   📊 Reportes
                 </button>
-                <button
-                  @click="eliminarPaciente(p.id_paciente)"
-                  class="text-red-500 hover:text-red-700 font-medium"
-                >
+                <button @click="abrirModalConfirm(p)" class="text-red-500 hover:text-red-700 font-medium">
                   🗑️ Eliminar
                 </button>
               </td>
@@ -89,24 +67,17 @@
       </div>
 
       <!-- Modal -->
-      <div
-        v-if="modalVisible"
-        class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 backdrop-blur-sm"
-      >
+      <div v-if="modalVisible"
+        class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 backdrop-blur-sm">
         <div class="relative bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200">
-          <button
-            @click="cerrarModal"
-            class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl leading-none"
-          >
+          <button @click="cerrarModal"
+            class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl leading-none">
             &times;
           </button>
 
           <div class="flex flex-col items-center">
-            <img
-              :src="pacienteSeleccionado.foto_url"
-              alt="Foto Mascota"
-              class="w-32 h-32 object-cover rounded-full mb-4 shadow-md border"
-            />
+            <img :src="pacienteSeleccionado.foto_url" alt="Foto Mascota"
+              class="w-32 h-32 object-cover rounded-full mb-4 shadow-md border" />
             <h2 class="text-2xl font-bold text-gray-800 mb-2">
               {{ pacienteSeleccionado.nombre }} - {{ pacienteSeleccionado.especie }}
             </h2>
@@ -125,33 +96,46 @@
             <p><strong>Estado de salud:</strong> {{ pacienteSeleccionado.estado }}</p>
             <p><strong>Estado corporal:</strong> {{ pacienteSeleccionado.estado_corporal }}</p>
             <p><strong>Peso:</strong> {{ pacienteSeleccionado.peso }} kg</p>
-            <p><strong>Cliente:</strong> {{ pacienteSeleccionado.id_cliente }}</p>
+            <p><strong>Cliente:</strong> {{ pacienteSeleccionado.cliente_nombre + " " +
+              pacienteSeleccionado.cliente_apellido }}</p>
           </div>
 
           <!-- Acciones en el modal -->
           <div class="mt-6 flex flex-wrap justify-center gap-3">
-            <button
-              @click="abrirModalCirugias(pacienteSeleccionado.id_paciente)"
-              class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-5 py-2 rounded-lg shadow transition"
-            >
+            <button @click="abrirModalCirugias(pacienteSeleccionado.id_paciente)"
+              class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-5 py-2 rounded-lg shadow transition">
               🩺 Cirugías
             </button>
-            <button
-              @click="abrirModalTratamientos(pacienteSeleccionado.id_paciente)"
-              class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-5 py-2 rounded-lg shadow transition"
-            >
+            <button @click="abrirModalTratamientos(pacienteSeleccionado.id_paciente)"
+              class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-5 py-2 rounded-lg shadow transition">
               💊 Tratamientos
             </button>
-            <button
-              @click="abrirModalFisioterapias(pacienteSeleccionado.id_paciente)"
-              class="bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold px-5 py-2 rounded-lg shadow transition"
-            >
+            <button @click="abrirModalFisioterapias(pacienteSeleccionado.id_paciente)"
+              class="bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold px-5 py-2 rounded-lg shadow transition">
               🐾 Fisioterapias
             </button>
           </div>
         </div>
       </div>
+      <CirugiasModal :pacienteId="pacienteIdCirugias" v-model:visible="cirugiasModalVisible"
+        :paciente="pacienteSeleccionado" />
+
+      <!-- Modal de tratamientos -->
+      <TratamientosModal :pacienteId="pacienteIdTratamientos" v-model:visible="tratamientosModalVisible"
+        :paciente="pacienteSeleccionado" />
+
+      <!-- Modal de fisioterapias -->
+      <FisioterapiasModal :pacienteId="pacienteIdFisioterapias" v-model:visible="fisioterapiaModalVisible"
+        :paciente="pacienteSeleccionado" />
     </div>
+
+    <ConfirmacionModal v-model="showConfirm" :itemName="pacienteSeleccionado?.nombre" title="Eliminar paciente"
+      message="¿Estás seguro de eliminar este paciente? Esto eliminara todos los datos asociados con el paciente"
+      @confirm="confirmarEliminarPaciente">
+    </ConfirmacionModal>
+
+    <ExitoModal v-model="showExito" title="Paciente eliminado" message="El paciente ha sido eliminado exitosamente" />
+
   </div>
 </template>
 
@@ -160,8 +144,12 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "#imports";
 import { pacientesService } from "~/server/services/pacientesService";
-import CirugiasModal from "~/components/cirugiasModal.vue";
-import TratamientosModal from "~/components/tratamientosModal.vue";
+import CirugiasModal from '~/components/cirugiasModal.vue';
+import TratamientosModal from '~/components/tratamientosModal.vue';
+import FisioterapiasModal from '~/components/fisioterapiasModal.vue';
+import ConfirmacionModal from "@/components/confirmacionModal.vue"
+import ExitoModal from "@/components/exitoModal.vue";
+
 
 const router = useRouter();
 
@@ -180,13 +168,39 @@ const pacienteIdTratamientos = ref(null);
 const fisioterapiaModalVisible = ref(false);
 const pacienteIdFisioterapias = ref(null);
 
+const showConfirm = ref(false);
+const showExito = ref(false);
+
+
+// 🔄 Cargar pacientes con nombre del cliente
 const cargarPacientes = async () => {
   try {
-    pacientes.value = await pacientesService.listarPacientes();
-  } catch (e) {
+    const pacientesApi = await $fetch("/api/pacientes");
+
+    // 🔹 Cargar cada cliente correspondiente al paciente
+    const pacientesConCliente = await Promise.all(
+      pacientesApi.map(async (p) => {
+        try {
+          const cliente = await $fetch(`/api/clientes/${p.id_cliente}`);
+          return {
+            ...p,
+            cliente_nombre: cliente?.nombres || "Sin asignar",
+            cliente_apellido: cliente?.apellidos || "Sin asignar",
+          };
+        } catch {
+          return { ...p, cliente_nombre: "Sin asignar" };
+        }
+      })
+    );
+
+    pacientes.value = pacientesConCliente;
+  } catch (err) {
+    console.error("Error cargando pacientes:", err);
     error.value = "Error al cargar pacientes";
+    pacientes.value = [];
   }
 };
+
 
 onMounted(cargarPacientes);
 
@@ -195,18 +209,28 @@ const abrirModal = (paciente) => {
   modalVisible.value = true;
 };
 
+const abrirModalConfirm = (paciente) => {
+  pacienteSeleccionado.value = paciente
+  showConfirm.value = true
+}
+
+
 const cerrarModal = () => {
   modalVisible.value = false;
   pacienteSeleccionado.value = {};
 };
 
-const eliminarPaciente = async (id) => {
-  if (!confirm("¿Seguro quieres eliminar este paciente?")) return;
+const confirmarEliminarPaciente = async () => {
+  if (!pacienteSeleccionado.value?.id_paciente) return;
   try {
-    await $fetch(`/api/pacientes/${id}`, { method: "DELETE" });
-    pacientes.value = await $fetch("/api/pacientes");
+    await pacientesService.eliminarPaciente(pacienteSeleccionado.value.id_paciente);
+    await cargarPacientes();
+    showConfirm.value = false;
+    pacienteSeleccionado.value = {};
+    showExito.value = true; // ✅ Mostrar modal de éxito
   } catch (e) {
     error.value = "Error al eliminar paciente";
+    console.error(e);
   }
 };
 

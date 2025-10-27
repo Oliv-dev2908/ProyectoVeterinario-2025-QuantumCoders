@@ -25,7 +25,7 @@
           <thead>
             <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
               <th class="p-3">Paciente</th>
-              <th class="p-3">Usuario</th>
+              <th class="p-3">Médico</th>
               <th class="p-3">Procedimiento</th>
               <th class="p-3">Fecha</th>
               <th class="p-3 text-center">Acciones</th>
@@ -41,7 +41,7 @@
               <td class="p-3">{{ f.nombre_usuario }}</td>
               <td class="p-3">{{ f.procedimiento }}</td>
               <td class="p-3">
-                {{ new Date(f.fecha).toLocaleDateString('es-BO', { year: 'numeric', month: 'short', day: 'numeric' }) }}
+                {{ f.fecha }}
               </td>
 
               <td class="p-3 flex justify-center gap-3">

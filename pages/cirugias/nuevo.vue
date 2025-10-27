@@ -35,14 +35,15 @@
           <!-- 📅 Fecha -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">📅 Fecha</label>
-            <input type="date" v-model="form.fecha"
+            <input type="date" v-model="form.fecha" @blur="validarCampo('fecha')"
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition" />
           </div>
 
           <!-- 🩹 Descripción -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">🩹 Descripción</label>
-            <textarea v-model="form.descripcion" rows="4" placeholder="Describe brevemente la cirugía realizada..."
+            <textarea v-model="form.descripcion" rows="4" @blur="validarCampo('descripcion')"
+              placeholder="Describe brevemente la cirugía realizada..."
               class="w-full border-gray-300 rounded-xl p-3 resize-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"></textarea>
           </div>
 
@@ -69,16 +70,9 @@ import { useSupabaseUser } from '#imports'
 import { useRouter } from 'vue-router'
 import ModalError from '../../components/modalError.vue'
 
-// ✅ Variables del modal
 const modalVisible = ref(false)
 const modalTitle = ref('')
 const modalMessage = ref('')
-
-const showModal = (message, title = 'Aviso') => {
-  modalMessage.value = message
-  modalTitle.value = title
-  modalVisible.value = true
-}
 
 const router = useRouter()
 const form = ref({
@@ -91,6 +85,119 @@ const form = ref({
 const pacientes = ref([])
 const user = useSupabaseUser()
 
+// Patrones prohibidos
+const contienePatronesProhibidos = (texto) => {
+  const patrones = [
+    /select|insert|delete|update|drop|alter|union|--|;/i, // SQL
+    /(script|<|>)/i, // Inyección HTML/JS
+    /(.)\1{4,}/, // Repeticiones sospechosas (5+ caracteres iguales)
+    /[!@#$%^&*()_+=\[\]{};':"\\|,.<>?\/~`¿¡]/i, // Caracteres especiales
+    /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{231A}\u{231B}\u{2328}\u{23CF}\u{23E9}-\u{23FF}\u{24C2}\u{25AA}\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2600}-\u{27BF}\u{2934}\u{2935}\u{2B05}-\u{2B07}\u{2B1B}\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}\u{1F004}\u{1F170}-\u{1F251}]/gu, // Emojis y símbolos raros
+  ];
+  return patrones.some((p) => p.test(texto));
+};
+
+// Validar cantidad de números
+const contarNumeros = (texto) => {
+  const numeros = texto.match(/\d/g);
+  return numeros ? numeros.length : 0;
+};
+
+// Palabras ofensivas
+const contieneOfensas = (texto) => {
+  const palabrasOfensivas = new RegExp(
+    "\\b(" +
+    [
+      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
+      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
+      "boludo", "mierda", "maldito", "malparido", "culero", "cabr[oó]n", "zorra",
+      "puta", "puto", "putita", "putilla", "maric[oó]n", "marica", "maricona",
+      "negro", "negrata", "gordo", "cerdo", "perra", "perro",
+      "infeliz", "babosa", "asqueroso", "asquerosa", "menso", "estupida", "idiotez", "inutil",
+      "zopenco", "tarada", "huevon", "huev[oó]n", "hueva", "huevada", "cojudo", "cojud@",
+      "pajero", "pajera", "verga", "vergazo", "chingar", "chingada", "chingado", "ching[oó]n",
+      "chingona", "malnacido", "malnacida", "desgraciado", "desgraciada", "imb[eé]cil",
+      "bastardo", "bastarda", "est[uú]pido", "maldita sea", "vete a la mierda", "vete al diablo",
+      "carajo", "joder", "hostia", "polla", "culo", "co[oó]", "cagada", "cagar", "me cago",
+      "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta", "t0nto", "put@", "estup1do", "imb3c1l"
+    ].join("|") +
+    ")\\b",
+    "i"
+  );
+  return palabrasOfensivas.test(texto);
+};
+
+// Validar texto
+const validarTexto = (campo, nombre, min, max) => {
+  if (!campo || campo.trim().length === 0) {
+    return `${nombre} no puede contener solo espacios en blanco.`;
+  }
+
+  if (campo.trim().length < min || campo.trim().length > max) {
+    return `${nombre} debe tener entre ${min} y ${max} caracteres.`;
+  }
+
+  const cantidadNumeros = contarNumeros(campo);
+  if (cantidadNumeros > 3) {
+    return `${nombre} no puede contener más de 3 números.`;
+  }
+
+  if (contienePatronesProhibidos(campo)) {
+    return `${nombre} contiene caracteres no permitidos, emojis o símbolos especiales.`;
+  }
+
+  if (contieneOfensas(campo)) {
+    return `${nombre} contiene palabras ofensivas o inapropiadas.`;
+  }
+
+  return null;
+};
+
+// Validar campo individual
+const validarCampo = (campo) => {
+  const f = form.value;
+  let error = null;
+
+  switch (campo) {
+    case 'descripcion':
+      error = validarTexto(f.descripcion, "Descripción", 10, 200);
+      break;
+    case 'fecha':
+      const [year, month, day] = form.value.fecha.split('-').map(Number);
+      const fechaSeleccionada = new Date(year, month - 1, day); // local
+      fechaSeleccionada.setHours(0, 0, 0, 0);
+
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      const veinteDiasDespues = new Date(hoy);
+      veinteDiasDespues.setDate(hoy.getDate() + 20);
+
+      if (fechaSeleccionada < hoy) {
+        mostrarError('La fecha no puede ser anterior a hoy.');
+        return;
+      }
+      if (fechaSeleccionada > veinteDiasDespues) {
+        mostrarError('La cirugía no puede programarse más de 20 días en el futuro.');
+        return;
+      }
+
+
+      break;
+  }
+
+  if (error) {
+    mostrarError(error);
+  }
+};
+
+// Mostrar modal de error
+const mostrarError = (mensaje) => {
+  modalTitle.value = "⚠️ Validación";
+  modalMessage.value = mensaje;
+  modalVisible.value = true;
+};
+
 onMounted(async () => {
   try {
     pacientes.value = await $fetch('/api/pacientes')
@@ -98,11 +205,11 @@ onMounted(async () => {
       const usuarioData = await $fetch(`/api/user/${user.value.id}`)
       form.value.id_usuario = usuarioData.id_usuario
     } else {
-      showModal('Usuario no logueado', '❌ Error')
+      mostrarError('Usuario no logueado')
     }
   } catch (err) {
     console.error('Error obteniendo datos:', err)
-    showModal('No se pudieron cargar los datos.', '❌ Error')
+    mostrarError('No se pudieron cargar los datos.')
   }
 })
 
@@ -117,70 +224,64 @@ watch(
 const guardarCirugia = async () => {
   // Validación paciente
   if (!form.value.id_paciente) {
-    showModal('Seleccione un paciente.', '❌ Error')
+    mostrarError('Debe seleccionar un paciente.')
     return
   }
 
   // Validación de fecha
-  const hoy = new Date()
-  hoy.setHours(0, 0, 0, 0)
-  const fechaSeleccionada = new Date(form.value.fecha)
-  fechaSeleccionada.setHours(0, 0, 0, 0)
-  const veinteDiasDespues = new Date(hoy)
-  veinteDiasDespues.setDate(veinteDiasDespues.getDate() + 20)
+  const [year, month, day] = form.value.fecha.split('-').map(Number);
+  const fechaSeleccionada = new Date(year, month - 1, day); // local
+  fechaSeleccionada.setHours(0, 0, 0, 0);
 
-  if (fechaSeleccionada <= hoy) {
-    showModal('La fecha no puede ser anterior a hoy.', '❌ Error')
-    return
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const veinteDiasDespues = new Date(hoy);
+  veinteDiasDespues.setDate(hoy.getDate() + 20);
+
+  if (fechaSeleccionada < hoy) {
+    mostrarError('La fecha no puede ser anterior a hoy.');
+    return;
   }
   if (fechaSeleccionada > veinteDiasDespues) {
-    showModal('La cirugía no puede programarse más de 20 días en el futuro.', '❌ Error')
-    return
+    mostrarError('La cirugía no puede programarse más de 20 días en el futuro.');
+    return;
   }
+
+
 
   // Validación descripción
-  const descripcion = form.value.descripcion.trim()
-  if (descripcion.length < 10) {
-    showModal('La descripción es demasiado corta.', '❌ Error')
-    return
-  }
-  if (descripcion.length > 200) {
-    showModal('La descripción es demasiado larga.', '❌ Error')
+  if (!form.value.descripcion || form.value.descripcion.trim() === '') {
+    mostrarError('La descripción no puede estar vacía.')
     return
   }
 
-  const patronesRaros = [/aaaa/i, /xdxd/i, /f{2,}/i, /[^\w\s.,]/]
-  if (patronesRaros.some((patron) => patron.test(descripcion))) {
-    showModal('La descripción contiene caracteres o secuencias inválidas.', '❌ Error')
+  const error = validarTexto(form.value.descripcion, "Descripción", 10, 200);
+  if (error) {
+    mostrarError(error)
     return
   }
 
-  const sqlInjection = [/;/, /--/, /DROP/i, /DELETE/i, /INSERT/i, /UPDATE/i]
-  if (sqlInjection.some((patron) => patron.test(descripcion))) {
-    showModal('La descripción contiene palabras reservadas o código no permitido.', '❌ Error')
-    return
-  }
-
-  const malasPalabras = ['puta', 'mierda', 'tonto']
-  if (malasPalabras.some((palabra) => descripcion.toLowerCase().includes(palabra))) {
-    showModal('La descripción contiene palabras inapropiadas.', '❌ Error')
-    return
-  }
+  // Limpiar espacios en blanco
+  form.value.descripcion = form.value.descripcion.trim();
 
   // Guardar cirugía
   try {
     await $fetch('/api/cirugias', { method: 'POST', body: form.value })
-    showModal('Cirugía registrada exitosamente.', '✅ Éxito')
+    modalTitle.value = '✅ Éxito'
+    modalMessage.value = 'Cirugía registrada exitosamente.'
+    modalVisible.value = true
   } catch (err) {
     console.error('Error guardando cirugía:', err)
-    showModal('Error guardando cirugía: ' + (err.data?.error || err.message), '❌ Error')
+    modalTitle.value = '❌ Error'
+    modalMessage.value = 'Error guardando cirugía: ' + (err.data?.error || err.message)
+    modalVisible.value = true
   }
 }
 
 // Función para manejar el cierre del modal
 const handleModalClose = () => {
   modalVisible.value = false
-  // Redirigir solo si fue un éxito
   if (modalTitle.value === '✅ Éxito') {
     router.push('/cirugias')
   }
