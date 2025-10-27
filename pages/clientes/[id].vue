@@ -19,7 +19,7 @@
           <!-- Nombres -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Nombres</label>
-            <input v-model="cliente.nombres" type="text"
+            <input v-model="cliente.nombres" @blur="validarCampo('nombres')" type="text"
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
               required />
           </div>
@@ -27,7 +27,7 @@
           <!-- Apellidos -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Apellidos</label>
-            <input v-model="cliente.apellidos" type="text"
+            <input v-model="cliente.apellidos" @blur="validarCampo('apellidos')" type="text"
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
               required />
           </div>
@@ -38,7 +38,7 @@
             <div class="flex gap-2">
               <input type="text" value="+591" disabled
                 class="w-20 border-gray-300 rounded-xl p-3 bg-gray-200 text-gray-700 cursor-not-allowed" />
-              <input v-model="cliente.telefonoNum" type="text" placeholder="6XXXXXXX o 7XXXXXXX"
+              <input v-model="cliente.telefonoNum" @blur="validarCampo('telefono')" type="text" placeholder="6XXXXXXX o 7XXXXXXX"
                 class="flex-1 border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
                 required />
             </div>
@@ -47,21 +47,21 @@
           <!-- Zona -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Zona</label>
-            <input v-model="cliente.zona" type="text"
+            <input v-model="cliente.zona" @blur="validarCampo('zona')" type="text"
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition" />
           </div>
 
           <!-- Calle -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Calle</label>
-            <input v-model="cliente.calle" type="text"
+            <input v-model="cliente.calle" @blur="validarCampo('calle')" type="text"
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition" />
           </div>
 
           <!-- Número -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Número</label>
-            <input v-model="cliente.numero" type="number" min="0" max="999999" placeholder="ej. 2355"
+            <input v-model="cliente.numero" @blur="validarCampo('numero')" type="text" placeholder="ej. 2355"
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition" />
           </div>
 
@@ -118,215 +118,214 @@ const handleModalClose = () => {
   }
 };
 
-// 🧩 Diccionario ampliado y reglas base
-const ofensivo = new RegExp(
-  "\\b(" +
-  [
-    // 🧠 Lenguaje ofensivo general
-    "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
-    "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
-    "boludo", "mierda", "maldito", "malparido", "culero", "cabrón", "cabron", "zorra",
-    "puta", "puto", "putita", "putilla", "putilla", "maricon", "maricón", "marica",
-    "maricona", "lesbiana", "gay", "homosexual", "negro", "negrata", "chino", "gordo",
-    "cerdo", "perra", "perro", "infeliz", "babosa", "asqueroso", "asquerosa", "menso",
-    "estupida", "idiotez", "inutil", "zopenco", "tarada", "huevon", "huevón", "hueva",
-    "huevada", "cojudo", "cojud@", "pajero", "pajera", "verga", "vergazo", "chingar",
-    "chingada", "chingado", "chingón", "chingona", "malnacido", "malnacida", "desgraciado",
-    "desgraciada", "imbécil", "bastardo", "bastarda", "estúpido", "maldita sea",
-    "vete a la mierda", "vete al diablo", "carajo", "joder", "hostia", "polla", "culo",
-    "coño", "cagada", "cagar", "me cago", "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta",
-    "t0nto", "put@", "estup1do", "imb3c1l",
-
-    // 💬 Palabras ofensivas en inglés
-    "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "cunt", "faggot",
-    "slut", "whore", "retard", "stupid", "idiot", "moron", "dumbass", "jerk", "loser",
-    "son of a bitch", "motherfucker", "bullshit", "suck my", "damn", "bloody hell",
-
-    // 🧨 Patrones de ataques XSS o inyección
-    "<script>", "<\\/script>", "javascript:", "onerror=", "onload=", "alert\\(", "prompt\\(",
-    "confirm\\(", "document\\.cookie", "document\\.write", "<iframe", "<img", "<svg",
-    "<embed", "<object", "<link", "<meta", "<base", "innerHTML", "eval\\(", "fetch\\(",
-    "XMLHttpRequest", "window\\.location", "window\\.open", "<style>", "<marquee>",
-
-    // 💣 SQL Injection y comandos peligrosos
-    "DROP\\s+TABLE", "DELETE\\s+FROM", "INSERT\\s+INTO", "SELECT\\s+\\*", "UPDATE\\s+SET",
-    "TRUNCATE", "ALTER\\s+TABLE", "CREATE\\s+DATABASE", "UNION\\s+SELECT", "OR\\s+1=1",
-    "--", ";--", ";", "'\\s*--", "'\\s*#", "\"\\s*--", "\"\\s*#", "\\*\\/\\*", "xp_cmdshell",
-    "exec\\s+", "execute\\s+", "sp_executesql", "information_schema", "sysobjects", "syscolumns",
-
-    // ⚠️ Patrones sospechosos y repetitivos
-    "(.){50,}",   // cadenas excesivamente largas sin espacios (ataques de buffer)
-    "(%27)|(')|(%2D%2D)|(--)|(%23)|(#)", // variantes de inyección
-    "(\\b(select|update|delete|insert|drop|alter|create)\\b\\s+.+\\b(from|into|table)\\b)"
-  ].join("|") +
-  ")\\b",
-  "i"
-);
-const repetido = /(.)\1{3,}/; // 4 o más repeticiones
-const doblesEspacios = / {2,}/;
-
-// ✍️ Solo letras y espacios (para nombres y apellidos)
-const contenidoValidoTexto = (texto) => {
-  if (!texto || texto.trim() === "") return false;
-  const limpio = texto.trim();
-
-  const simbolos = /[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/; // solo letras y espacios
-
-  if (ofensivo.test(limpio)) return false;
-  if (repetido.test(limpio)) return false;
-  if (simbolos.test(limpio)) return false;
-  if (doblesEspacios.test(limpio)) return false;
-
-  return true;
+// Patrones prohibidos
+const contienePatronesProhibidos = (texto) => {
+  const patrones = [
+    /select|insert|delete|update|drop|alter|union|--|;/i, // SQL
+    /(script|<|>)/i, // Inyección HTML/JS
+    /(.)\1{3,}/, // Repeticiones sospechosas (4+ caracteres iguales)
+    /[!@#$%^&*()_+=\[\]{};':"\\|,.<>?\/~`¿¡]/i, // Caracteres especiales
+    /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, // Emojis
+    / {2,}/, // Múltiples espacios
+  ];
+  return patrones.some((p) => p.test(texto));
 };
 
-// 🏘️ Letras, espacios y hasta 3 números en total (para zona y calle)
-const contenidoValidoDireccion = (texto) => {
-  if (!texto || texto.trim() === "") return false;
-  const limpio = texto.trim();
-
-  const simbolos = /[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]/; // permite letras, números y espacios
-  const cantidadNumeros = (limpio.match(/\d/g) || []).length; // contar cuántos números hay
-
-  if (ofensivo.test(limpio)) return false;
-  if (repetido.test(limpio)) return false;
-  if (simbolos.test(limpio)) return false;
-  if (doblesEspacios.test(limpio)) return false;
-  if (cantidadNumeros > 3) return false; // máximo 3 números permitidos
-
-  return true;
+// Palabras ofensivas
+const contieneOfensas = (texto) => {
+  const palabrasOfensivas = new RegExp(
+    "\\b(" +
+    [
+      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
+      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
+      "boludo", "mierda", "maldito", "malparido", "culero", "cabr[oó]n", "zorra",
+      "puta", "puto", "putita", "maricon", "maricón", "marica",
+      "negro", "negrata", "gordo", "cerdo", "perra", "perro",
+      "infeliz", "asqueroso", "menso", "estupida", "inutil",
+      "huevon", "huev[oó]n", "cojudo", "verga", "chingar",
+      "bastardo", "est[uú]pido", "carajo", "joder", "culo",
+      "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta", "put@",
+      "fuck", "shit", "bitch", "asshole", "dick", "damn"
+    ].join("|") +
+    ")\\b",
+    "i"
+  );
+  return palabrasOfensivas.test(texto);
 };
 
-// 📱 Validación de teléfono
+// Validar solo letras (nombres y apellidos)
+const validarSoloLetras = (texto, nombre) => {
+  if (!texto || texto.trim().length === 0) {
+    return `${nombre} no puede estar vacío o contener solo espacios.`;
+  }
+
+  const limpio = texto.trim();
+  
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(limpio)) {
+    return `${nombre} solo puede contener letras y espacios.`;
+  }
+
+  if (contienePatronesProhibidos(limpio)) {
+    return `${nombre} contiene caracteres no permitidos, emojis o espacios múltiples.`;
+  }
+
+  if (contieneOfensas(limpio)) {
+    return `${nombre} contiene palabras ofensivas o inapropiadas.`;
+  }
+
+  return null;
+};
+
+// Validar dirección (zona y calle - máximo 3 números)
+const validarDireccion = (texto, nombre) => {
+  if (!texto || texto.trim().length === 0) {
+    return `${nombre} no puede estar vacío o contener solo espacios.`;
+  }
+
+  const limpio = texto.trim();
+  const cantidadNumeros = (limpio.match(/\d/g) || []).length;
+
+  if (cantidadNumeros > 3) {
+    return `${nombre} no puede contener más de 3 números.`;
+  }
+
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]+$/.test(limpio)) {
+    return `${nombre} solo puede contener letras, números y espacios.`;
+  }
+
+  if (contienePatronesProhibidos(limpio)) {
+    return `${nombre} contiene caracteres no permitidos, emojis o espacios múltiples.`;
+  }
+
+  if (contieneOfensas(limpio)) {
+    return `${nombre} contiene palabras ofensivas o inapropiadas.`;
+  }
+
+  return null;
+};
+
+// Validar longitud
+const validarLongitud = (texto, nombre, min, max) => {
+  const longitud = texto.trim().length;
+  if (longitud < min || longitud > max) {
+    return `${nombre} debe tener entre ${min} y ${max} caracteres.`;
+  }
+  return null;
+};
+
+// Validar teléfono
 const validarTelefono = (tel) => {
-  if (!tel || tel.trim() === "") return false;
-  return /^[67]\d{7}$/.test(tel);
+  if (!tel || tel.trim() === "") {
+    return "El teléfono no puede estar vacío.";
+  }
+  if (!/^[67]\d{7}$/.test(tel)) {
+    return "El teléfono debe empezar con 6 o 7 y tener exactamente 8 dígitos.";
+  }
+  return null;
 };
 
+// Validar número de casa
 const validarNumeroCasa = (num) => {
-  if (num === null || num === undefined) return false;
-  const str = String(num).trim();
-  if (str === "") return false;
-  return /^\d{1,6}$/.test(str);
+  if (!num || String(num).trim() === "") {
+    return "El número de casa no puede estar vacío.";
+  }
+  if (!/^\d{1,6}$/.test(String(num))) {
+    return "El número de casa debe tener entre 1 y 6 dígitos.";
+  }
+  return null;
 };
 
+// Validar campo individual
+const validarCampo = (campo) => {
+  const c = cliente.value;
+  let error = null;
 
-// 📏 Validación de longitudes
-const validarLongitud = (campo, min, max) => {
-  if (!campo || campo.trim() === "") return false;
-  const longitud = campo.trim().length;
-  return longitud >= min && longitud <= max;
+  switch (campo) {
+    case 'nombres':
+      error = validarSoloLetras(c.nombres, "Nombres") || validarLongitud(c.nombres, "Nombres", 3, 30);
+      break;
+    case 'apellidos':
+      error = validarSoloLetras(c.apellidos, "Apellidos") || validarLongitud(c.apellidos, "Apellidos", 3, 30);
+      break;
+    case 'telefono':
+      error = validarTelefono(c.telefonoNum);
+      break;
+    case 'zona':
+      error = validarDireccion(c.zona, "Zona") || validarLongitud(c.zona, "Zona", 3, 25);
+      break;
+    case 'calle':
+      error = validarDireccion(c.calle, "Calle") || validarLongitud(c.calle, "Calle", 3, 30);
+      break;
+    case 'numero':
+      error = validarNumeroCasa(c.numero);
+      break;
+  }
+
+  if (error) {
+    mostrarError(error);
+  }
 };
 
-// 🚀 Función principal
+// 🚀 Editar cliente
 const editarCliente = async () => {
-  const clienteData = cliente.value;
+  const c = cliente.value;
 
-  // 🧠 Validación de nombres y apellidos
-  if (!contenidoValidoTexto(clienteData.nombres)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "El nombre contiene texto inválido, ofensivo o símbolos no permitidos.";
-    modalVisible.value = true;
-    return;
-  }
+  // Validaciones completas antes de enviar
+  const errores = [
+    validarSoloLetras(c.nombres, "Nombres"),
+    validarLongitud(c.nombres, "Nombres", 3, 30),
+    validarSoloLetras(c.apellidos, "Apellidos"),
+    validarLongitud(c.apellidos, "Apellidos", 3, 30),
+    validarTelefono(c.telefonoNum),
+    validarDireccion(c.zona, "Zona"),
+    validarLongitud(c.zona, "Zona", 3, 25),
+    validarDireccion(c.calle, "Calle"),
+    validarLongitud(c.calle, "Calle", 3, 30),
+    validarNumeroCasa(c.numero),
+  ];
 
-  if (!contenidoValidoTexto(clienteData.apellidos)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "El apellido contiene texto inválido, ofensivo o símbolos no permitidos.";
-    modalVisible.value = true;
-    return;
-  }
+  const error = errores.find((e) => e);
+  if (error) return mostrarError(error);
 
-  // 🧭 Validación de zona y calle (permiten hasta 3 números)
-  if (!contenidoValidoDireccion(clienteData.zona)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "La zona contiene texto inválido o más de 3 números.";
-    modalVisible.value = true;
-    return;
-  }
-
-  if (!contenidoValidoDireccion(clienteData.calle)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "La calle contiene texto inválido o más de 3 números.";
-    modalVisible.value = true;
-    return;
-  }
-
-  // 📏 Longitudes
-  if (!validarLongitud(clienteData.nombres, 3, 30)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "El nombre debe tener entre 3 y 30 caracteres.";
-    modalVisible.value = true;
-    return;
-  }
-
-  if (!validarLongitud(clienteData.apellidos, 3, 30)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "El apellido debe tener entre 3 y 30 caracteres.";
-    modalVisible.value = true;
-    return;
-  }
-
-  if (!validarLongitud(clienteData.zona, 3, 25)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "La zona debe tener entre 3 y 25 caracteres.";
-    modalVisible.value = true;
-    return;
-  }
-
-  if (!validarLongitud(clienteData.calle, 3, 30)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "La calle debe tener entre 3 y 30 caracteres.";
-    modalVisible.value = true;
-    return;
-  }
-
-  // 📞 Teléfono
-  if (!validarTelefono(clienteData.telefonoNum)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "El teléfono debe empezar con 6 o 7, tener 8 dígitos y no contener letras.";
-    modalVisible.value = true;
-    return;
-  }
-
-  // 🏠 Número de casa
-  if (!validarNumeroCasa(clienteData.numero)) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "El número de casa debe tener entre 1 y 6 dígitos numéricos.";
-    modalVisible.value = true;
-    return;
-  }
-
-  // 🔁 Duplicados
-  const telefonoCompleto = "+591" + clienteData.telefonoNum;
-  const duplicado = clientes.value.find(c =>
-    c.id !== clienteData.id && // ⬅️ Ignorar el mismo cliente
-    c.nombres.toLowerCase() === clienteData.nombres.toLowerCase() &&
-    c.apellidos.toLowerCase() === clienteData.apellidos.toLowerCase() &&
-    c.telefono === telefonoCompleto
+  // Verificar duplicados (excluyendo el mismo cliente)
+  const telefonoCompleto = "+591" + c.telefonoNum;
+  const duplicado = clientes.value.find(cl =>
+    cl.id_cliente !== c.id_cliente &&
+    cl.nombres.toLowerCase() === c.nombres.toLowerCase() &&
+    cl.apellidos.toLowerCase() === c.apellidos.toLowerCase() &&
+    cl.telefono === telefonoCompleto
   );
 
-
   if (duplicado) {
-    modalTitle.value = "❌ Error";
-    modalMessage.value = "Ya existe un cliente con esos datos.";
-    modalVisible.value = true;
-    return;
+    return mostrarError("Ya existe otro cliente con esos datos.");
   }
 
-  // 📨 Envío al backend
-  const clienteEnviar = { ...clienteData, telefono: telefonoCompleto };
+  // Enviar al backend
+  const clienteEnviar = { 
+    nombres: c.nombres.trim(),
+    apellidos: c.apellidos.trim(),
+    telefono: telefonoCompleto,
+    zona: c.zona.trim(),
+    calle: c.calle.trim(),
+    numero: c.numero
+  };
 
   try {
-    await clientesService.actualizarCliente(cliente.value.id_cliente, clienteEnviar);
+    await clientesService.actualizarCliente(c.id_cliente, clienteEnviar);
     modalTitle.value = "✅ Éxito";
-    modalMessage.value = "Cliente registrado correctamente.";
+    modalMessage.value = "Cliente actualizado correctamente.";
     modalVisible.value = true;
   } catch (e) {
     modalTitle.value = "❌ Error";
-    modalMessage.value = "Error al registrar cliente.";
+    modalMessage.value = e.data?.message || "Error al actualizar cliente.";
     modalVisible.value = true;
   }
 };
 
+// Mostrar modal de error
+const mostrarError = (mensaje) => {
+  modalTitle.value = "⚠️ Validación";
+  modalMessage.value = mensaje;
+  modalVisible.value = true;
+};
 </script>

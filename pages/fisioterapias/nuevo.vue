@@ -1,12 +1,9 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative"
-  >
+    class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center relative">
     <!-- 🔙 Botón regresar -->
-    <button
-      @click="router.push('/fisioterapias')"
-      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50"
-    >
+    <button @click="router.push('/fisioterapias')"
+      class="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-medium shadow transition-transform hover:scale-105 active:scale-95 z-50">
       ← Volver a Fisioterapias
     </button>
 
@@ -22,16 +19,10 @@
           <!-- Paciente -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">🐾 Paciente</label>
-            <select
-              v-model="form.id_paciente"
-              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
-            >
+            <select v-model="form.id_paciente"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition">
               <option value="" disabled>Seleccione un paciente</option>
-              <option
-                v-for="p in pacientes"
-                :key="p.id_paciente"
-                :value="p.id_paciente"
-              >
+              <option v-for="p in pacientes" :key="p.id_paciente" :value="p.id_paciente">
                 {{ p.nombre }}
               </option>
             </select>
@@ -40,40 +31,29 @@
           <!-- Usuario -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Usuario</label>
-            <input
-              type="text"
-              :value="usuarioNombre"
-              disabled
-              class="w-full border-gray-300 rounded-xl p-3 bg-gray-100 text-gray-600 cursor-not-allowed"
-            />
+            <input type="text" :value="usuarioNombre" disabled
+              class="w-full border-gray-300 rounded-xl p-3 bg-gray-100 text-gray-600 cursor-not-allowed" />
           </div>
 
           <!-- Fecha -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Fecha</label>
-            <input
-              type="date"
-              v-model="form.fecha"
-              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
-            />
+            <input type="date" v-model="form.fecha" @blur="validarCampo('fecha')"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition" />
           </div>
 
           <!-- Procedimiento -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">Procedimiento</label>
-            <textarea
-              v-model="form.procedimiento"
+            <textarea v-model="form.procedimiento" @blur="validarCampo('procedimiento')"
               placeholder="Describe el procedimiento"
-              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
-            ></textarea>
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"></textarea>
           </div>
 
           <!-- Botón guardar -->
           <div class="flex justify-end">
-            <button
-              type="submit"
-              class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold shadow hover:scale-105 active:scale-95 transition-transform"
-            >
+            <button type="submit"
+              class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold shadow hover:scale-105 active:scale-95 transition-transform">
               Guardar Fisioterapia
             </button>
           </div>
@@ -82,12 +62,7 @@
     </div>
 
     <!-- 🧩 Modal de errores -->
-    <ModalError
-      :visible="modalVisible"
-      :title="modalTitle"
-      :message="modalMessage"
-      @close="handleModalClose"
-    />
+    <ModalError :visible="modalVisible" :title="modalTitle" :message="modalMessage" @close="handleModalClose" />
   </div>
 </template>
 
@@ -95,7 +70,6 @@
 import { reactive, ref, onMounted, watch } from "vue"
 import { useSupabaseUser, useRouter } from "#imports"
 import ModalError from "@/components/modalError.vue"
-
 
 const router = useRouter()
 const user = useSupabaseUser()
@@ -117,9 +91,111 @@ const modalVisible = ref(false)
 const modalTitle = ref("")
 const modalMessage = ref("")
 
+// Patrones prohibidos
+const contienePatronesProhibidos = (texto) => {
+  const patrones = [
+    /select|insert|delete|update|drop|alter|union|--|;/i, // SQL
+    /(script|<|>)/i, // Inyección HTML/JS
+    /(.)\1{4,}/, // Repeticiones sospechosas (5+ caracteres iguales)
+    /[!@#$%^&*()_+=\[\]{};':"\\|,.<>?\/~`¿¡]/i, // Caracteres especiales
+    /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{231A}\u{231B}\u{2328}\u{23CF}\u{23E9}-\u{23FF}\u{24C2}\u{25AA}\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2600}-\u{27BF}\u{2934}\u{2935}\u{2B05}-\u{2B07}\u{2B1B}\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}\u{1F004}\u{1F170}-\u{1F251}]/gu, // Emojis y símbolos raros
+  ];
+  return patrones.some((p) => p.test(texto));
+};
+
+// Validar cantidad de números
+const contarNumeros = (texto) => {
+  const numeros = texto.match(/\d/g);
+  return numeros ? numeros.length : 0;
+};
+
+// Palabras ofensivas
+const contieneOfensas = (texto) => {
+  const palabrasOfensivas = new RegExp(
+    "\\b(" +
+    [
+      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
+      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
+      "boludo", "mierda", "maldito", "malparido", "culero", "cabr[oó]n", "zorra",
+      "puta", "puto", "putita", "putilla", "maric[oó]n", "marica", "maricona",
+      "negro", "negrata", "gordo", "cerdo", "perra", "perro",
+      "infeliz", "babosa", "asqueroso", "asquerosa", "menso", "estupida", "idiotez", "inutil",
+      "zopenco", "tarada", "huevon", "huev[oó]n", "hueva", "huevada", "cojudo", "cojud@",
+      "pajero", "pajera", "verga", "vergazo", "chingar", "chingada", "chingado", "ching[oó]n",
+      "chingona", "malnacido", "malnacida", "desgraciado", "desgraciada", "imb[eé]cil",
+      "bastardo", "bastarda", "est[uú]pido", "maldita sea", "vete a la mierda", "vete al diablo",
+      "carajo", "joder", "hostia", "polla", "culo", "co[oó]", "cagada", "cagar", "me cago",
+      "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta", "t0nto", "put@", "estup1do", "imb3c1l"
+    ].join("|") +
+    ")\\b",
+    "i"
+  );
+  return palabrasOfensivas.test(texto);
+};
+
+// Validar texto
+const validarTexto = (campo, nombre, min, max) => {
+  if (!campo || campo.trim().length === 0) {
+    return `${nombre} no puede contener solo espacios en blanco.`;
+  }
+
+  if (campo.trim().length < min || campo.trim().length > max) {
+    return `${nombre} debe tener entre ${min} y ${max} caracteres.`;
+  }
+
+  const cantidadNumeros = contarNumeros(campo);
+  if (cantidadNumeros > 3) {
+    return `${nombre} no puede contener más de 3 números.`;
+  }
+
+  if (contienePatronesProhibidos(campo)) {
+    return `${nombre} contiene caracteres no permitidos, emojis o símbolos especiales.`;
+  }
+
+  if (contieneOfensas(campo)) {
+    return `${nombre} contiene palabras ofensivas o inapropiadas.`;
+  }
+
+  return null;
+};
+
+// Validar campo individual
+const validarCampo = (campo) => {
+  let error = null;
+
+  switch (campo) {
+    case 'procedimiento':
+      error = validarTexto(form.procedimiento, "Procedimiento", 10, 200);
+      break;
+    case 'fecha':
+      const hoy = new Date()
+      const fechaSeleccionada = new Date(form.fecha)
+      const diferenciaDias = (fechaSeleccionada - hoy) / (1000 * 60 * 60 * 24)
+
+      if (fechaSeleccionada < new Date(hoy.toISOString().substr(0, 10))) {
+        return mostrarModal("⚠️ Fecha inválida", "La fecha no puede ser anterior a hoy.")
+      }
+
+      if (diferenciaDias > 20) {
+        return mostrarModal("⚠️ Fecha inválida", "La fecha no puede ser más de 20 días en el futuro.")
+      }
+      break;
+  }
+
+  if (error) {
+    mostrarModal("⚠️ Validación", error);
+  }
+};
+
+// Mostrar modal
+const mostrarModal = (titulo, mensaje) => {
+  modalTitle.value = titulo
+  modalMessage.value = mensaje
+  modalVisible.value = true
+}
+
 const handleModalClose = () => {
   modalVisible.value = false
-  // Redirigir solo si fue éxito
   if (modalTitle.value === "✅ Éxito") {
     router.push("/fisioterapias")
   }
@@ -155,21 +231,15 @@ watch(
   { immediate: true }
 )
 
-// 🧩 Función para mostrar modal
-const mostrarModal = (titulo, mensaje) => {
-  modalTitle.value = titulo
-  modalMessage.value = mensaje
-  modalVisible.value = true
-}
+// 💾 Guardar fisioterapia
+const guardarFisioterapia = async () => {
+  // Validación paciente
+  if (!form.id_paciente) {
+    mostrarModal("⚠️ Atención", "Debe seleccionar un paciente.")
+    return
+  }
 
-// 🔍 Validaciones del formulario
-// 🔍 Validaciones del formulario
-const validarFormulario = () => {
-  // Paciente
-  if (!form.id_paciente)
-    return mostrarModal("⚠️ Atención", "Debe seleccionar un paciente.")
-
-  // Fecha
+  // Validación de fecha
   const hoy = new Date()
   const fechaSeleccionada = new Date(form.fecha)
   const diferenciaDias = (fechaSeleccionada - hoy) / (1000 * 60 * 60 * 24)
@@ -182,78 +252,20 @@ const validarFormulario = () => {
     return mostrarModal("⚠️ Fecha inválida", "La fecha no puede ser más de 20 días en el futuro.")
   }
 
-  // Procedimiento
-  const texto = form.procedimiento.trim()
-  if (!texto)
-    return mostrarModal("⚠️ Atención", "Debe ingresar una descripción del procedimiento.")
+  // Validación procedimiento
+  if (!form.procedimiento || form.procedimiento.trim() === '') {
+    mostrarModal("⚠️ Atención", "Debe ingresar una descripción del procedimiento.")
+    return
+  }
 
-  // Longitud mínima y máxima
-  if (texto.length < 10)
-    return mostrarModal("⚠️ Texto demasiado corto", "El procedimiento debe tener al menos 10 caracteres.")
-  if (texto.length > 200)
-    return mostrarModal("⚠️ Texto demasiado largo", "El procedimiento no puede superar los 200 caracteres.")
+  const error = validarTexto(form.procedimiento, "Procedimiento", 10, 200);
+  if (error) {
+    mostrarModal("⚠️ Validación", error)
+    return
+  }
 
-  // Palabras ofensivas o sospechosas
-  const ofensivas = new RegExp(
-  "\\b(" +
-    [
-      // 🧠 Lenguaje ofensivo general
-      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
-      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
-      "boludo", "mierda", "maldito", "malparido", "culero", "cabrón", "cabron", "zorra",
-      "puta", "puto", "putita", "putilla", "putilla", "maricon", "maricón", "marica",
-      "maricona", "lesbiana", "gay", "homosexual", "negro", "negrata", "chino", "gordo",
-      "cerdo", "perra", "perro", "infeliz", "babosa", "asqueroso", "asquerosa", "menso",
-      "estupida", "idiotez", "inutil", "zopenco", "tarada", "huevon", "huevón", "hueva",
-      "huevada", "cojudo", "cojud@", "pajero", "pajera", "verga", "vergazo", "chingar",
-      "chingada", "chingado", "chingón", "chingona", "malnacido", "malnacida", "desgraciado",
-      "desgraciada", "imbécil", "bastardo", "bastarda", "estúpido", "maldita sea",
-      "vete a la mierda", "vete al diablo", "carajo", "joder", "hostia", "polla", "culo",
-      "coño", "cagada", "cagar", "me cago", "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta",
-      "t0nto", "put@", "estup1do", "imb3c1l",
-
-      // 💬 Palabras ofensivas en inglés
-      "fuck", "shit", "bitch", "asshole", "bastard", "dick", "cock", "cunt", "faggot",
-      "slut", "whore", "retard", "stupid", "idiot", "moron", "dumbass", "jerk", "loser",
-      "son of a bitch", "motherfucker", "bullshit", "suck my", "damn", "bloody hell",
-
-      // 🧨 Patrones de ataques XSS o inyección
-      "<script>", "<\\/script>", "javascript:", "onerror=", "onload=", "alert\\(", "prompt\\(",
-      "confirm\\(", "document\\.cookie", "document\\.write", "<iframe", "<img", "<svg",
-      "<embed", "<object", "<link", "<meta", "<base", "innerHTML", "eval\\(", "fetch\\(",
-      "XMLHttpRequest", "window\\.location", "window\\.open", "<style>", "<marquee>",
-
-      // 💣 SQL Injection y comandos peligrosos
-      "DROP\\s+TABLE", "DELETE\\s+FROM", "INSERT\\s+INTO", "SELECT\\s+\\*", "UPDATE\\s+SET",
-      "TRUNCATE", "ALTER\\s+TABLE", "CREATE\\s+DATABASE", "UNION\\s+SELECT", "OR\\s+1=1",
-      "--", ";--", ";", "'\\s*--", "'\\s*#", "\"\\s*--", "\"\\s*#", "\\*\\/\\*", "xp_cmdshell",
-      "exec\\s+", "execute\\s+", "sp_executesql", "information_schema", "sysobjects", "syscolumns",
-
-      // ⚠️ Patrones sospechosos y repetitivos
-      "/ {2,}/",
-      "(.){50,}",   // cadenas excesivamente largas sin espacios (ataques de buffer)
-      "(%27)|(')|(%2D%2D)|(--)|(%23)|(#)", // variantes de inyección
-      "(\\b(select|update|delete|insert|drop|alter|create)\\b\\s+.+\\b(from|into|table)\\b)"
-    ].join("|") +
-  ")\\b",
-  "i"
-);
-  const sqlInyecciones = /(drop\s|delete\s|insert\s|update\s|select\s|--|;|\/\*|\*\/)/i
-  const repeticiones = /(.)\1{4,}/
-
-  if (ofensivas.test(texto))
-    return mostrarModal("🚫 Contenido inapropiado", "El texto contiene palabras ofensivas.")
-  if (sqlInyecciones.test(texto))
-    return mostrarModal("🚫 Seguridad", "El texto contiene posibles inyecciones SQL.")
-  if (repeticiones.test(texto))
-    return mostrarModal("🚫 Texto inválido", "El texto tiene caracteres repetitivos en exceso.")
-
-  return true
-}
-
-// 💾 Guardar fisioterapia
-const guardarFisioterapia = async () => {
-  if (!validarFormulario()) return
+  // Limpiar espacios en blanco
+  form.procedimiento = form.procedimiento.trim();
 
   try {
     await $fetch("/api/fisioterapias", { method: "POST", body: form })

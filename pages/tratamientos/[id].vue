@@ -49,12 +49,15 @@
           <!-- 🧩 Tipo -->
           <div>
             <label class="block text-gray-700 font-medium mb-2">🧩 Tipo de tratamiento</label>
-            <input
-              v-model="form.tipo"
-              type="text"
-              placeholder="Ej: Desparasitación, Vacunación..."
-              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
-            />
+             <select v-model="form.tipo"
+              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition">
+              <option value="" disabled>Seleccione el tipo de tratamiento</option>
+              <option value="Vacunación">Vacunación</option>
+              <option value="Desparasitación">Desparasitación</option>
+              <option value="Limpieza dental">Limpieza dental</option>
+              <option value="Revisión general">Revisión general</option>
+              <option value="Otro">Otro</option>
+            </select>
           </div>
 
           <!-- 📅 Fecha inicio -->
@@ -64,7 +67,7 @@
               type="date"
               v-model="form.fecha_inicio"
               disabled
-              class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
+              class="w-full border-gray-300 rounded-xl p-3 bg-gray-100 cursor-not-allowed"
             />
           </div>
 
@@ -77,6 +80,7 @@
               step="0.01"
               min="10"
               max="1500"
+              @blur="validarCampo('costo')"
               placeholder="Ej: 80.00"
               class="w-full border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
             />
@@ -116,6 +120,7 @@
             <textarea
               v-model="form.descripcion"
               rows="4"
+              @blur="validarCampo('descripcion')"
               placeholder="Describe brevemente el tratamiento..."
               class="w-full border-gray-300 rounded-xl p-3 resize-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition"
             ></textarea>
@@ -170,6 +175,105 @@ const modalVisible = ref(false)
 const modalTitle = ref("")
 const modalMessage = ref("")
 
+// Patrones prohibidos
+const contienePatronesProhibidos = (texto) => {
+  const patrones = [
+    /select|insert|delete|update|drop|alter|union|--|;/i, // SQL
+    /(script|<|>)/i, // Inyección HTML/JS
+    /(.)\1{4,}/, // Repeticiones sospechosas (5+ caracteres iguales)
+    /[!@#$%^&*()_+=\[\]{};':"\\|,.<>?\/~`¿¡]/i, // Caracteres especiales
+    /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{231A}\u{231B}\u{2328}\u{23CF}\u{23E9}-\u{23FF}\u{24C2}\u{25AA}\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2600}-\u{27BF}\u{2934}\u{2935}\u{2B05}-\u{2B07}\u{2B1B}\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}\u{1F004}\u{1F170}-\u{1F251}]/gu, // Emojis y símbolos raros
+  ];
+  return patrones.some((p) => p.test(texto));
+};
+
+// Validar cantidad de números
+const contarNumeros = (texto) => {
+  const numeros = texto.match(/\d/g);
+  return numeros ? numeros.length : 0;
+};
+
+// Palabras ofensivas
+const contieneOfensas = (texto) => {
+  const palabrasOfensivas = new RegExp(
+    "\\b(" +
+    [
+      "idiota", "tonto", "estupido", "imbecil", "burro", "bobo", "tarado", "mongol",
+      "retrasado", "animal", "bruto", "baboso", "pendejo", "gilipollas", "pelotudo",
+      "boludo", "mierda", "maldito", "malparido", "culero", "cabr[oó]n", "zorra",
+      "puta", "puto", "putita", "putilla", "maric[oó]n", "marica", "maricona",
+      "negro", "negrata", "gordo", "cerdo", "perra", "perro",
+      "infeliz", "babosa", "asqueroso", "asquerosa", "menso", "estupida", "idiotez", "inutil",
+      "zopenco", "tarada", "huevon", "huev[oó]n", "hueva", "huevada", "cojudo", "cojud@",
+      "pajero", "pajera", "verga", "vergazo", "chingar", "chingada", "chingado", "ching[oó]n",
+      "chingona", "malnacido", "malnacida", "desgraciado", "desgraciada", "imb[eé]cil",
+      "bastardo", "bastarda", "est[uú]pido", "maldita sea", "vete a la mierda", "vete al diablo",
+      "carajo", "joder", "hostia", "polla", "culo", "co[oó]", "cagada", "cagar", "me cago",
+      "mierd@", "mierd4", "p3ndej", "imb3cil", "idi0ta", "t0nto", "put@", "estup1do", "imb3c1l"
+    ].join("|") +
+    ")\\b",
+    "i"
+  );
+  return palabrasOfensivas.test(texto);
+};
+
+// Validar texto
+const validarTexto = (campo, nombre, min, max) => {
+  if (!campo || campo.trim().length === 0) {
+    return `${nombre} no puede contener solo espacios en blanco.`;
+  }
+  
+  if (campo.trim().length < min || campo.trim().length > max) {
+    return `${nombre} debe tener entre ${min} y ${max} caracteres.`;
+  }
+
+  const cantidadNumeros = contarNumeros(campo);
+  if (cantidadNumeros > 3) {
+    return `${nombre} no puede contener más de 3 números.`;
+  }
+  
+  if (contienePatronesProhibidos(campo)) {
+    return `${nombre} contiene caracteres no permitidos, emojis o símbolos especiales.`;
+  }
+
+  if (contieneOfensas(campo)) {
+    return `${nombre} contiene palabras ofensivas o inapropiadas.`;
+  }
+  
+  return null;
+};
+
+// Validar campo individual
+const validarCampo = (campo) => {
+  let error = null;
+
+  switch (campo) {
+    case 'tipo':
+      if (!form.tipo || form.tipo.trim().length < 3) {
+        error = "El tipo de tratamiento debe tener al menos 3 caracteres.";
+      } else if (form.tipo.trim().length > 50) {
+        error = "El tipo de tratamiento no puede superar los 50 caracteres.";
+      }
+      break;
+    case 'descripcion':
+      error = validarTexto(form.descripcion, "Descripción", 10, 200);
+      break;
+    case 'costo':
+      if (!form.costo || isNaN(form.costo)) {
+        error = "Debe ingresar un costo válido.";
+      } else if (form.costo < 10 || form.costo > 1500) {
+        error = "El costo debe estar entre 10.00 y 1500.00 Bs.";
+      } else if (!/^\d+(\.\d{1,2})?$/.test(form.costo)) {
+        error = "El costo debe tener como máximo 2 decimales.";
+      }
+      break;
+  }
+
+  if (error) {
+    mostrarModal("⚠️ Validación", error);
+  }
+};
+
 const handleModalClose = () => {
   modalVisible.value = false
   if (modalTitle.value === "✅ Éxito") router.push("/tratamientos")
@@ -178,6 +282,12 @@ const handleModalClose = () => {
 const mostrarError = (msg) => {
   modalTitle.value = "⚠️ Error"
   modalMessage.value = msg
+  modalVisible.value = true
+}
+
+const mostrarModal = (titulo, mensaje) => {
+  modalTitle.value = titulo
+  modalMessage.value = mensaje
   modalVisible.value = true
 }
 
@@ -193,32 +303,34 @@ onMounted(async () => {
   usuarioNombre.value = usuario ? usuario.nombre : "Desconocido"
 })
 
-// Validaciones
-const validarDescripcion = (texto) => {
-  const ofensivas = ["tonto","idiota","imbecil","maldito"]
-  const sqlMaliciosas = /(drop\s|delete\s|insert\s|update\s|select\s|\<script|\<\/script)/i
-  if (sqlMaliciosas.test(texto)) return "No se permiten posibles inyecciones SQL o scripts."
-  if (ofensivas.some(p => texto.toLowerCase().includes(p))) return "Evita usar palabras ofensivas."
-  if (/(.)\1{4,}/.test(texto)) return "El texto contiene repeticiones sospechosas."
-  if (texto.length < 10) return "La descripción debe tener al menos 10 caracteres."
-  if (texto.length > 500) return "La descripción no puede superar los 500 caracteres."
-  return null
-}
-
 const editarTratamiento = async () => {
-  const hoy = new Date()
-  const fechaInicio = new Date(form.fecha_inicio)
-  const limite = new Date()
-  limite.setDate(hoy.getDate() + 20)
-
   if (!form.id_paciente) return mostrarError("Debe seleccionar un paciente.")
-  if (!form.tipo || form.tipo.trim().length < 3) return mostrarError("Debe ingresar un tipo de tratamiento válido (mínimo 3 caracteres).")
-  if (!form.costo || isNaN(form.costo) || form.costo < 10 || form.costo > 1500) return mostrarError("El costo debe estar entre 10 y 1500 Bs.")
-  if (!/^\d+(\.\d{1,2})?$/.test(form.costo)) return mostrarError("El costo debe tener como máximo 2 decimales.")
+  
+  if (!form.tipo || form.tipo.trim().length < 3) {
+    return mostrarError("Debe ingresar un tipo de tratamiento válido (mínimo 3 caracteres).")
+  }
+  
+  if (!form.costo || isNaN(form.costo) || form.costo < 10 || form.costo > 1500) {
+    return mostrarError("El costo debe estar entre 10 y 1500 Bs.")
+  }
+  
+  if (!/^\d+(\.\d{1,2})?$/.test(form.costo)) {
+    return mostrarError("El costo debe tener como máximo 2 decimales.")
+  }
+  
   if (!form.estado) return mostrarError("Debe seleccionar un estado.")
   if (!form.gravedad) return mostrarError("Debe seleccionar una gravedad.")
-  const errorDesc = validarDescripcion(form.descripcion)
-  if (errorDesc) return mostrarError(errorDesc)
+  
+  if (!form.descripcion || form.descripcion.trim() === '') {
+    return mostrarError("La descripción no puede estar vacía.")
+  }
+
+  const error = validarTexto(form.descripcion, "Descripción", 10, 200);
+  if (error) return mostrarError(error)
+
+  // Limpiar espacios en blanco
+  form.descripcion = form.descripcion.trim();
+  form.tipo = form.tipo.trim();
 
   try {
     await $fetch(`/api/tratamientos/${route.params.id}`, { method: "PUT", body: form })

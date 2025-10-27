@@ -22,9 +22,8 @@
         <table class="min-w-full text-left text-gray-700">
           <thead>
             <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
-              <th class="p-3">ID</th>
               <th class="p-3">Paciente</th>
-              <th class="p-3">Usuario</th>
+              <th class="p-3">Médico</th>
               <th class="p-3">Tipo</th>
               <th class="p-3">Descripción</th>
               <th class="p-3">Gravedad</th>
@@ -41,7 +40,6 @@
               :key="t.id_tratamiento"
               class="border-t hover:bg-teal-50 transition"
             >
-              <td class="p-3 font-medium">{{ t.id_tratamiento }}</td>
               <td class="p-3">{{ t.nombre_paciente }}</td>
               <td class="p-3">{{ t.nombre_usuario }}</td>
               <td class="p-3">{{ t.tipo }}</td>
