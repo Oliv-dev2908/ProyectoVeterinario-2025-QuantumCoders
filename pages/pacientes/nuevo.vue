@@ -224,6 +224,7 @@ const contienePatronesProhibidos = (texto) => {
     /(.)\1{3,}/,                                                         // repeticiones sospechosas (aaaa, !!!!)
     /[<>;"'`]/,                                                          // caracteres problemáticos en XSS/atributos
     /\b\d{4,}\b/,                                                         // números largos (grupos de 4+ dígitos: tarjetas, IDs)
+    /[!@#$%^&*()_+=\[\]{};':"\\|,.<>?\/~`¿¡]/i,
     /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{231A}\u{231B}\u{2328}\u{23CF}\u{23E9}-\u{23FF}\u{24C2}\u{25AA}\u{25AB}\u{25B6}\u{25C0}\u{25FB}-\u{25FE}\u{2600}-\u{27BF}\u{2934}\u{2935}\u{2B05}-\u{2B07}\u{2B1B}\u{2B1C}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}\u{1F004}\u{1F170}-\u{1F251}]/gu, // Emojis y símbolos raros
   ];
 
