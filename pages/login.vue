@@ -105,9 +105,12 @@
         <form @submit.prevent="signIn" class="space-y-4">
           <div>
             <label class="text-sm font-medium text-gray-700">Correo</label>
-            <input v-model="email" type="email" placeholder="ejemplo@correo.com"
-              class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" />
+            <input v-model="email" type="email" placeholder="ejemplo@correo.com" @blur="validarCorreo"
+              class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+              :class="{ 'border-red-500 ring-red-300': emailError }" />
+            <p v-if="emailError" class="text-red-500 text-sm mt-1">{{ emailError }}</p>
           </div>
+
 
           <div class="relative">
             <input id="password" v-model="password" :type="passwordVisible ? 'text' : 'password'" placeholder="••••••••"
@@ -195,6 +198,31 @@ const isTypingPassword = ref(false);
 
 const passwordVisible = ref(false);
 
+const emailError = ref("")
+
+const validarCorreo = () => {
+  const correo = email.value.trim()
+
+  if (!correo) {
+    emailError.value = "El correo es obligatorio"
+  } else if (correo.length < 5 || correo.length > 100) {
+    emailError.value = "El correo debe tener entre 5 y 100 caracteres"
+  } else if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(correo)) {
+    emailError.value = "Formato de correo inválido"
+  } else if (
+    /(select|insert|delete|update|drop|alter|--|;|<|>|script|alert)/i.test(correo)
+  ) {
+    emailError.value = "El correo contiene patrones no permitidos"
+  } else if (/(puta|mierda|idiota|imbecil|maldito|estupido)/i.test(correo)) {
+    emailError.value = "El correo contiene lenguaje inapropiado"
+  } else if (/([a-zA-Z0-9])\1{3,}/.test(correo)) {
+    emailError.value = "El correo contiene repeticiones sospechosas"
+  } else {
+    emailError.value = ""
+  }
+}
+
+
 function togglePassword() {
   passwordVisible.value = !passwordVisible.value;
   const input = document.getElementById("password");
@@ -250,17 +278,21 @@ const eyeStyle = computed(() => ({
 }));
 
 async function signIn() {
+  validarCorreo()
+  if (emailError.value) return
+
   try {
     const { data, error } = await client.auth.signInWithPassword({
       email: email.value,
       password: password.value,
-    });
-    if (error) throw error;
-    router.push("/");
+    })
+    if (error) throw error
+    router.push("/")
   } catch (err) {
-    errorMsg.value = "Credenciales incorrectas 🐾";
+    errorMsg.value = "Credenciales incorrectas 🐾"
   }
 }
+
 
 const goToSignUp = () => router.push("/signUp");
 

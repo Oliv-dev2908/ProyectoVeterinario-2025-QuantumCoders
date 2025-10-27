@@ -2,12 +2,12 @@
   <div class="min-h-screen flex items-center justify-center bg-gray-50 overflow-hidden" @mousemove="moveEyes">
     <div class="flex w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden">
 
-      <!-- 🐾 Panel izquierdo - Animales -->
+      <!-- 🐾 Panel izquierdo -->
       <div class="w-1/2 flex items-center justify-center bg-gray-100 relative p-8">
         <div class="relative w-64 h-64 flex items-end justify-center">
           <div class="left-section">
             <div class="animals-container">
-              <!-- Perrito -->
+              <!-- 🐶 Perrito -->
               <div class="animal dog">
                 <div class="dog-body">
                   <div class="dog-head">
@@ -32,7 +32,7 @@
                 </div>
               </div>
 
-              <!-- Gatito -->
+              <!-- 🐱 Gatito -->
               <div class="animal cat">
                 <div class="cat-body">
                   <div class="cat-head">
@@ -62,7 +62,7 @@
                 </div>
               </div>
 
-              <!-- Conejito -->
+              <!-- 🐰 Conejito -->
               <div class="animal rabbit">
                 <div class="rabbit-body">
                   <div class="rabbit-head">
@@ -93,7 +93,7 @@
         </div>
       </div>
 
-      <!-- 🧩 Panel derecho - Signup -->
+      <!-- 🧩 Panel derecho -->
       <div class="w-1/2 p-10 flex flex-col justify-center">
         <h2 class="text-3xl font-bold text-gray-800 mb-2 text-center">Crear cuenta</h2>
         <p class="text-gray-500 mb-6 text-center">Completa tus datos para registrarte 🐾</p>
@@ -102,14 +102,14 @@
 
         <form @submit.prevent="signUp" class="space-y-4">
           <div>
-            <label class="text-sm font-medium text-gray-700">Nombre completo</label>
-            <input v-model="fullName" type="text" placeholder="Juan Pérez"
+            <label class="text-sm font-medium text-gray-700">Nombre de usuario</label>
+            <input v-model="fullName" @blur="validateUsername" type="text" placeholder="juan_perez-99"
               class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" />
           </div>
 
           <div>
             <label class="text-sm font-medium text-gray-700">Correo</label>
-            <input v-model="email" type="email" placeholder="ejemplo@email.com"
+            <input v-model="email" @blur="validateEmail" type="email" placeholder="ejemplo@email.com"
               class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none" />
           </div>
 
@@ -123,13 +123,12 @@
             </button>
           </div>
 
-
           <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
             Registrarse
           </button>
         </form>
 
-        <!-- OAuth Buttons -->
+        <!-- 🌐 OAuth -->
         <div class="my-6 space-y-3">
           <button @click="signInWithGoogleAuth"
             class="w-full flex items-center justify-center gap-2 border py-2 rounded-lg hover:bg-gray-50 transition">
@@ -138,7 +137,6 @@
           </button>
           <button @click="signInWithFacebookAuth"
             class="w-full flex items-center justify-center gap-2 border py-2 rounded-lg hover:bg-gray-50 transition">
-            <!-- Facebook SVG -->
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-blue-600"
               viewBox="0 0 24 24">
               <path
@@ -158,10 +156,9 @@
           </button>
         </div>
 
-        <!-- Redirigir a login -->
         <p class="text-center text-sm text-gray-600 mt-4">
           ¿Ya tienes cuenta?
-          <button @click="goToSignIn" class="text-blue-600 hover:underline font-medium">Inicia Sesion</button>
+          <button @click="goToSignIn" class="text-blue-600 hover:underline font-medium">Inicia sesión</button>
         </p>
       </div>
     </div>
@@ -170,7 +167,7 @@
 
 <script setup>
 import "./login.css";
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'nuxt/app'
 
 const client = useSupabaseClient()
@@ -180,31 +177,79 @@ const fullName = ref('')
 const email = ref('')
 const password = ref('')
 const errorMsg = ref(null)
-
-const passwordVisible = ref(false);
+const passwordVisible = ref(false)
 
 function togglePassword() {
-  passwordVisible.value = !passwordVisible.value;
-  const input = document.getElementById("password");
+  passwordVisible.value = !passwordVisible.value
+  const input = document.getElementById("password")
+  input.type = passwordVisible.value ? "text" : "password"
+}
 
-  if (passwordVisible.value) {
-    input.type = "text";
-    closeOneEye(); // Cerramos un ojo cuando mostramos la contraseña
-  } else {
-    input.type = "password";
-    openAllEyes(); // Abrimos ambos ojos cuando ocultamos
+// 🧩 VALIDACIONES
+function validateUsername() {
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/
+  if (!fullName.value.trim()) {
+    errorMsg.value = "El nombre de usuario es obligatorio."
+    return false
+  }
+  if (!usernameRegex.test(fullName.value)) {
+    errorMsg.value = "El nombre de usuario solo puede contener letras, números, guiones bajos (_) o guiones (-)."
+    return false
+  }
+  errorMsg.value = null
+  return true
+}
+
+function validateEmail() {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!email.value.trim()) {
+    errorMsg.value = "El correo electrónico es obligatorio."
+    return false
+  }
+  if (!emailRegex.test(email.value)) {
+    errorMsg.value = "Por favor ingresa un correo electrónico válido."
+    return false
+  }
+  errorMsg.value = null
+  return true
+}
+
+// 🎯 REGISTRO
+async function signUp() {
+  errorMsg.value = null
+
+  if (!validateUsername() || !validateEmail()) return
+
+  try {
+    const { data, error } = await client.auth.signUp({
+      email: email.value,
+      password: password.value,
+      options: { data: { full_name: fullName.value } }
+    })
+
+    if (error) throw error
+
+    await fetch(`/api/user/loginsignup?uuid=${data.user.id}&name=${fullName.value}`)
+    router.push("/confirm")
+
+  } catch (error) {
+    errorMsg.value = traducirErrorSupabase(error.message)
   }
 }
 
-// Cerrar un solo ojo para guiñar
-function closeOneEye() {
-  const allEyes = document.querySelectorAll(".dog-eye, .cat-eye, .rabbit-eye");
-  allEyes.forEach((eye, index) => {
-    if (index % 2 === 0) eye.classList.add("closed"); // cerramos solo el primer ojo
-    else eye.classList.remove("closed");
-  });
+// 🔠 Traducción de errores de Supabase
+function traducirErrorSupabase(msg) {
+  const traducciones = {
+    "User already registered": "Este correo ya está registrado.",
+    "Invalid login credentials": "Credenciales inválidas.",
+    "Email rate limit exceeded": "Demasiados intentos. Intenta más tarde.",
+    "Password should be at least 6 characters": "La contraseña debe tener al menos 6 caracteres.",
+    "Invalid email": "El correo electrónico no es válido.",
+  }
+  return traducciones[msg] || "Ocurrió un error al registrarte. Intenta nuevamente."
 }
 
+// 🧠 Animación ojos
 const moveEyes = (e) => {
   const x = (e.clientX / window.innerWidth - 0.5) * 10
   const y = (e.clientY / window.innerHeight - 0.5) * 10
@@ -214,37 +259,15 @@ const moveEyes = (e) => {
   })
 }
 
-function closeAllEyes() {
-  document.querySelectorAll(".dog-eye, .cat-eye, .rabbit-eye").forEach((eye) => {
-    eye.classList.add("closed");
-  });
-}
-function openAllEyes() {
-  document.querySelectorAll(".dog-eye, .cat-eye, .rabbit-eye").forEach((eye) => {
-    eye.classList.remove("closed");
-  });
-}
-
-async function signUp() {
-  try {
-    const { data, error } = await client.auth.signUp({
-      email: email.value,
-      password: password.value,
-      options: { data: { full_name: fullName.value } }
-    })
-    if (error) throw error
-    await fetch(`/api/user/loginsignup?uuid=${data.user.id}&name=${fullName.value}`)
-    router.push("/confirm")
-  } catch (error) {
-    errorMsg.value = error.message
-  }
-}
 onMounted(() => {
-  const passwordInput = document.getElementById("password");
-
-  passwordInput.addEventListener("focus", closeAllEyes);
-  passwordInput.addEventListener("blur", openAllEyes);
-});
+  const passwordInput = document.getElementById("password")
+  passwordInput.addEventListener("focus", () => {
+    document.querySelectorAll(".dog-eye, .cat-eye, .rabbit-eye").forEach(e => e.classList.add("closed"))
+  })
+  passwordInput.addEventListener("blur", () => {
+    document.querySelectorAll(".dog-eye, .cat-eye, .rabbit-eye").forEach(e => e.classList.remove("closed"))
+  })
+})
 
 const goToSignIn = () => router.push('/login')
 const signInWithGoogleAuth = async () => client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/confirm` } })
