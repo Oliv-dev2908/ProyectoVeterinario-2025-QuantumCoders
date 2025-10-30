@@ -2,6 +2,16 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex">
     <!-- Ajuste por sidebar -->
     <div class="flex-1 p-8 ml-55">
+      <div class="flex justify-end gap-4 mb-6">
+        <button @click="router.push('/realizarCitas')"
+          class="bg-gradient-to-r from-teal-400 to-emerald-500 text-white font-semibold px-6 py-2 rounded-xl shadow hover:scale-105 hover:shadow-lg transition">
+          🗓️ Calendario
+        </button>
+        <button @click="router.push('/citas')"
+          class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold px-6 py-2 rounded-xl shadow hover:scale-105 hover:shadow-lg transition">
+          📋 Citas
+        </button>
+      </div>
       <!-- 🐾 Encabezado -->
       <div class="flex items-center justify-between mb-6">
         <div>
@@ -27,11 +37,7 @@
           </thead>
 
           <tbody>
-            <tr
-              v-for="cita in citas"
-              :key="cita.id_cita"
-              class="border-t hover:bg-teal-50 transition"
-            >
+            <tr v-for="cita in citas" :key="cita.id_cita" class="border-t hover:bg-teal-50 transition">
               <td class="p-3">{{ cita.nombre_mascota }}</td>
               <td class="p-3">{{ cita.nombre_dueño }}</td>
               <td class="p-3">{{ cita.telefono_dueño || "—" }}</td>
@@ -41,15 +47,9 @@
 
               <!-- 📩 Mensaje del recordatorio -->
               <td class="p-3">
-                <textarea
-                  v-model="cita.mensaje"
-                  rows="2"
-                  maxlength="200"
-                  @blur="validarMensaje(cita)"
+                <textarea v-model="cita.mensaje" rows="2" maxlength="200" @blur="validarMensaje(cita)"
                   class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-300 focus:outline-none"
-                  :disabled="cita.recordatorio_enviado"
-                  :class="{ 'border-red-500': cita.mensajeError }"
-                ></textarea>
+                  :disabled="cita.recordatorio_enviado" :class="{ 'border-red-500': cita.mensajeError }"></textarea>
                 <p v-if="cita.mensajeError" class="text-red-500 text-xs mt-1">{{ cita.mensajeError }}</p>
                 <p class="text-gray-400 text-xs mt-1">{{ cita.mensaje?.length || 0 }}/200 caracteres</p>
               </td>
@@ -58,9 +58,7 @@
               <td class="p-3 text-center">
                 <button
                   class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-1.5 rounded-xl shadow hover:scale-105 hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  :disabled="cita.recordatorio_enviado || cita.mensajeError"
-                  @click="enviarRecordatorio(cita)"
-                >
+                  :disabled="cita.recordatorio_enviado || cita.mensajeError" @click="enviarRecordatorio(cita)">
                   {{ cita.recordatorio_enviado ? "Enviado" : "Enviar" }}
                 </button>
               </td>
@@ -84,8 +82,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import ModalError from "@/components/modalError.vue"
 
+const router = useRouter()
 const citas = ref([])
 const modalVisible = ref(false)
 const modalTitle = ref("")
@@ -147,7 +147,7 @@ const contienePatronesMaliciosos = (texto) => {
 // ✅ Validar mensaje
 const validarMensaje = (cita) => {
   const mensaje = cita.mensaje?.trim() || ''
-  
+
   // Resetear error
   cita.mensajeError = null
 
@@ -291,10 +291,12 @@ textarea {
   resize: none;
   transition: all 0.3s ease;
 }
+
 textarea:disabled {
   background-color: #f9fafb;
   color: #9ca3af;
 }
+
 textarea.border-red-500 {
   border-color: #ef4444 !important;
 }
