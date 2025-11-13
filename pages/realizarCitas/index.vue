@@ -188,10 +188,15 @@
       </div>
     </transition>
 
-    <!-- Simple toast -->
-    <div v-if="toast.message" :class="['fixed bottom-6 right-6 rounded-xl px-4 py-3 text-white shadow-lg', toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500']">
-      {{ toast.message }}
-    </div>
+<ModalError
+  :visible="modalVisible"
+  :title="modalTitle"
+  :message="modalMessage"
+  @close="handleModalClose"
+/>
+
+<!-- Simple toast --> <div v-if="toast.message" :class="['fixed bottom-6 right-6 rounded-xl px-4 py-3 text-white shadow-lg', toast.type === 'success' ? 'bg-emerald-500' : 'bg-red-500']"> {{ toast.message }} </div>
+
   </div>
 </template>
 
@@ -215,9 +220,14 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import ModalError from '@/components/modalError.vue'
+
 
 const router = useRouter()
 const user = useSupabaseUser()
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalMessage = ref('')
 
 // estados
 const citas = ref([])
@@ -230,6 +240,16 @@ const horaInvalida = ref(false)
 const nombreUsuario = ref('Cargando...')
 const toast = ref({ message: '', type: 'success' })
 let toastTimeout = null
+
+const mostrarError = (mensaje) => {
+  modalTitle.value = "⚠️ Validación";
+  modalMessage.value = mensaje;
+  modalVisible.value = true;
+};
+
+function handleModalClose() {
+  modalVisible.value = false
+}
 
 // nueva cita (fecha bloqueada)
 const nuevaCita = ref({
@@ -320,13 +340,35 @@ const contieneOfensas = (texto) => {
 }
 const validarTexto = (texto, nombre, min, max) => {
   if (texto === null || texto === undefined) return null
-  if (!texto || texto.trim().length === 0) return `${nombre} no puede contener solo espacios en blanco.`
-  if (texto.trim().length < min || texto.trim().length > max) return `${nombre} debe tener entre ${min} y ${max} caracteres.`
-  if (contarNumeros(texto) > 3) return `${nombre} no puede contener más de 3 números.`
-  if (contienePatronesProhibidos(texto)) return `${nombre} contiene caracteres no permitidos.`
-  if (contieneOfensas(texto)) return `${nombre} contiene palabras ofensivas.`
-  return null
+
+  if (!texto || texto.trim().length === 0) {
+    mostrarError(`${nombre} no puede contener solo espacios en blanco.`)
+    return false
+  }
+
+  if (texto.trim().length < min || texto.trim().length > max) {
+    mostrarError(`${nombre} debe tener entre ${min} y ${max} caracteres.`)
+    return false
+  }
+
+  if (contarNumeros(texto) > 3) {
+    mostrarError(`${nombre} no puede contener más de 3 números.`)
+    return false
+  }
+
+  if (contienePatronesProhibidos(texto)) {
+    mostrarError(`${nombre} contiene caracteres no permitidos.`)
+    return false
+  }
+
+  if (contieneOfensas(texto)) {
+    mostrarError(`${nombre} contiene palabras ofensivas.`)
+    return false
+  }
+
+  return true
 }
+
 
 // ---------- Cargar datos iniciales ----------
 const cargarPacientes = async () => {
@@ -516,9 +558,9 @@ const validarCampo = (campo) => {
         const fechaProx = new Date(f.fechaproxconsulta)
         const diferenciaDias = (fechaProx - fechaConsulta) / (1000*60*60*24)
         const hora = fechaProx.getHours() + fechaProx.getMinutes()/60
-        if (fechaProx < fechaConsulta) error = 'La fecha de próxima consulta no puede ser anterior a la fecha actual.'
-        else if (diferenciaDias > 20) error = 'La fecha de próxima consulta no puede superar 20 días desde hoy.'
-        else if (hora < 9 || hora > 21) error = 'La hora de próxima consulta debe estar entre 09:00 y 21:00.'
+        if (fechaProx < fechaConsulta) mostrarError('La fecha de próxima consulta no puede ser anterior a la fecha actual.')
+        else if (diferenciaDias > 20) mostrarError ('La fecha de próxima consulta no puede superar 20 días desde hoy.')
+        else if (hora < 9 || hora > 21) mostrarError ('La hora de próxima consulta debe estar entre 09:00 y 21:00.')
       }
       break
   }

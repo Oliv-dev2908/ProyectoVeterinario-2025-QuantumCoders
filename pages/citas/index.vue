@@ -2,7 +2,14 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex">
     <!-- Ajuste por sidebar -->
     <div class="flex-1 p-8 ml-55">
-      <div class="flex justify-end gap-4 mb-6">
+      <!-- 🐾 Encabezado -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">📅 Citas Pendientes</h1>
+          <p class="text-gray-500 text-sm mt-1">Gestión y recordatorios de citas veterinarias</p>
+        </div>
+
+        <div class="flex justify-end gap-4 mb-6">
         <button @click="router.push('/realizarCitas')"
           class="bg-gradient-to-r from-teal-400 to-emerald-500 text-white font-semibold px-6 py-2 rounded-xl shadow hover:scale-105 hover:shadow-lg transition">
           🗓️ Calendario
@@ -12,13 +19,9 @@
           📋 Citas
         </button>
       </div>
-      <!-- 🐾 Encabezado -->
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-800">📅 Citas Pendientes</h1>
-          <p class="text-gray-500 text-sm mt-1">Gestión y recordatorios de citas veterinarias</p>
-        </div>
       </div>
+
+      
 
       <!-- 🧾 Tabla -->
       <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
