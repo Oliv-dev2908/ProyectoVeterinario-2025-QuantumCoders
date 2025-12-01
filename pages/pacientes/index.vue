@@ -14,6 +14,19 @@
         </router-link>
       </div>
 
+      <!-- 🔍 Barra de búsqueda -->
+<div class="mb-6">
+  <input
+    v-model="busqueda"
+    type="text"
+    placeholder="🔍 Buscar mascota por nombre..."
+    class="w-full max-w-md px-4 py-2 rounded-xl border border-gray-300
+           focus:outline-none focus:ring-2 focus:ring-teal-400
+           shadow-sm transition"
+  />
+</div>
+
+
       <!-- 🧾 Tabla de pacientes -->
       <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
         <table class="min-w-full text-left text-gray-700">
@@ -29,7 +42,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in pacientes" :key="p.id_paciente" class="border-t hover:bg-teal-50 transition">
+            <tr v-for="p in pacientesFiltrados" :key="p.id_paciente" class="border-t hover:bg-teal-50 transition">
               <td class="p-3">{{ p.nombre }}</td>
               <td class="p-3">{{ p.especie }}</td>
               <td class="p-3">{{ p.raza }}</td>
@@ -57,11 +70,12 @@
             </tr>
 
             <!-- Estado vacío -->
-            <tr v-if="pacientes.length === 0">
-              <td colspan="8" class="p-6 text-center text-gray-500">
-                🐾 No hay pacientes registrados aún
-              </td>
-            </tr>
+            <tr v-if="pacientesFiltrados.length === 0">
+  <td colspan="8" class="p-6 text-center text-gray-500">
+    🐾 No se encontraron pacientes
+  </td>
+</tr>
+
           </tbody>
         </table>
       </div>
@@ -141,7 +155,7 @@
 
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "#imports";
 import { pacientesService } from "~/server/services/pacientesService";
 import CirugiasModal from '~/components/cirugiasModal.vue';
@@ -170,6 +184,18 @@ const pacienteIdFisioterapias = ref(null);
 
 const showConfirm = ref(false);
 const showExito = ref(false);
+
+const busqueda = ref("");
+
+// 🔍 Filtrar pacientes por nombre
+const pacientesFiltrados = computed(() => {
+  if (!busqueda.value) return pacientes.value;
+
+  return pacientes.value.filter(p =>
+    p.nombre.toLowerCase().includes(busqueda.value.toLowerCase())
+  );
+});
+
 
 
 // 🔄 Cargar pacientes con nombre del cliente
