@@ -196,7 +196,7 @@ onMounted(async () => {
   try {
     paciente.value = await pacientesService.obtenerPaciente(route.params.id);
     clientes.value = await clientesService.listarClientes();
-    
+
     // Guardar valores iniciales
     valoresIniciales.value = {
       color: paciente.value.color || '',
@@ -205,7 +205,7 @@ onMounted(async () => {
       cirugiasprevias: paciente.value.cirugiasprevias || '',
       estado: paciente.value.estado || '',
     };
-    
+
     // Marcar como modificados los campos que ya tienen contenido
     Object.keys(valoresIniciales.value).forEach(campo => {
       if (valoresIniciales.value[campo] && valoresIniciales.value[campo].trim().length > 0) {
@@ -243,15 +243,15 @@ const validarTexto = (campo, nombre, min, max) => {
   if (!campo || campo.trim().length === 0) {
     return `${nombre} no puede contener solo espacios en blanco.`;
   }
-  
+
   if (campo.trim().length < min || campo.trim().length > max) {
     return `${nombre} debe tener entre ${min} y ${max} caracteres.`;
   }
-  
+
   if (contienePatronesProhibidos(campo)) {
     return `${nombre} no puede contener números ni caracteres especiales.`;
   }
-  
+
   return null;
 };
 
@@ -378,7 +378,10 @@ const editarPaciente = async () => {
   if (error) return mostrarError(error);
 
   try {
-    await $fetch("/api/pacientes", { method: "POST", body: p });
+    await $fetch(`/api/pacientes/${p.id_paciente}`, {
+      method: "PUT",
+      body: p
+    });
     modalTitle.value = "✅ Éxito";
     modalMessage.value = "Paciente actualizado correctamente.";
   } catch (err) {
