@@ -28,7 +28,10 @@
 
 
       <!-- 🧾 Tabla de pacientes -->
-      <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+      <div v-if="cargando" class="flex justify-center items-center py-20">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-teal-500"></div>
+      </div>
+      <div v-else class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
         <table class="min-w-full text-left text-gray-700">
           <thead>
             <tr class="bg-teal-100 text-gray-700 uppercase text-sm">
@@ -79,6 +82,24 @@
           </tbody>
         </table>
       </div>
+
+      <!-- 📄 Paginación -->
+      <div class="flex justify-center items-center gap-4 mt-6">
+        <button @click="pagina--, cargarPacientes()" :disabled="pagina === 1"
+          class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50">
+          ◀ Anterior
+        </button>
+
+        <span class="font-semibold text-gray-700">
+          Página {{ pagina }} de {{ Math.ceil(total / limite) }}
+        </span>
+
+        <button @click="pagina++, cargarPacientes()" :disabled="pagina >= Math.ceil(total / limite)"
+          class="px-4 py-2 bg-gray-200 rounded disabled:opacity-50">
+          Siguiente ▶
+        </button>
+      </div>
+
 
       <!-- Modal -->
       <div v-if="modalVisible"
@@ -198,12 +219,11 @@ const pacientesFiltrados = computed(() => {
 
 
 
-// 🔄 Cargar pacientes con nombre del cliente
 const cargarPacientes = async () => {
+  cargando.value = true; // empieza a cargar
   try {
     const pacientesApi = await $fetch("/api/pacientes");
 
-    // 🔹 Cargar cada cliente correspondiente al paciente
     const pacientesConCliente = await Promise.all(
       pacientesApi.map(async (p) => {
         try {
@@ -214,19 +234,36 @@ const cargarPacientes = async () => {
             cliente_apellido: cliente?.apellidos || "Sin asignar",
           };
         } catch {
-          return { ...p, cliente_nombre: "Sin asignar" };
+          return { ...p, cliente_nombre: "Sin asignar", cliente_apellido: "" };
         }
       })
     );
 
-    pacientes.value = pacientesConCliente;
+    // Filtrado
+    let filtrados = pacientesConCliente.filter(p =>
+      p.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) ||
+      `${p.cliente_nombre} ${p.cliente_apellido}`.toLowerCase().includes(busqueda.value.toLowerCase())
+    );
+
+    total.value = filtrados.length;
+
+    // Paginación
+    const inicio = (pagina.value - 1) * limite;
+    pacientes.value = filtrados.slice(inicio, inicio + limite);
+
   } catch (err) {
     console.error("Error cargando pacientes:", err);
     error.value = "Error al cargar pacientes";
     pacientes.value = [];
+  } finally {
+    cargando.value = false; // termina de cargar
   }
 };
 
+watch(busqueda, () => {
+  pagina.value = 1; // reinicia a la primera página al cambiar búsqueda
+  cargarPacientes();
+});
 
 onMounted(cargarPacientes);
 
