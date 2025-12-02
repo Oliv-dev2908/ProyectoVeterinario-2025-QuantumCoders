@@ -44,7 +44,7 @@
               <td class="p-3">{{ p.raza }}</td>
               <td class="p-3">{{ p.edad }}</td>
               <td class="p-3">{{ p.sexo ? 'Macho' : 'Hembra' }}</td>
-              <td class="p-3">{{ p.cliente_nombre + " " + p.cliente_apellido }}</td>
+              <td class="p-3">{{ p.cliente?.nombre_completo || "Sin asignar"}}</td>
               <td class="p-3 flex justify-center gap-2 flex-wrap">
                 <button @click="abrirModal(p)" class="text-green-600 hover:text-green-800 font-medium">
                   👁️ Ver
@@ -123,8 +123,7 @@
             <p><strong>Estado de salud:</strong> {{ pacienteSeleccionado.estado }}</p>
             <p><strong>Estado corporal:</strong> {{ pacienteSeleccionado.estado_corporal }}</p>
             <p><strong>Peso:</strong> {{ pacienteSeleccionado.peso }} kg</p>
-            <p><strong>Cliente:</strong> {{ pacienteSeleccionado.cliente_nombre + " " +
-              pacienteSeleccionado.cliente_apellido }}</p>
+            <p><strong>Cliente:</strong> {{ p.cliente?.nombre_completo || "Sin asignar" }}</p>
           </div>
 
           <!-- Acciones en el modal -->
@@ -206,45 +205,28 @@ const cargando = ref(false);
 
 
 const cargarPacientes = async () => {
-  cargando.value = true; // empieza a cargar
   try {
-    const pacientesApi = await $fetch("/api/pacientes");
+    const skip = (pagina.value - 1) * limite;
 
-    const pacientesConCliente = await Promise.all(
-      pacientesApi.map(async (p) => {
-        try {
-          const cliente = await $fetch(`/api/clientes/${p.id_cliente}`);
-          return {
-            ...p,
-            cliente_nombre: cliente?.nombres || "Sin asignar",
-            cliente_apellido: cliente?.apellidos || "Sin asignar",
-          };
-        } catch {
-          return { ...p, cliente_nombre: "Sin asignar", cliente_apellido: "" };
-        }
-      })
-    );
+    const res = await $fetch("/api/pacientes/pasMas", {  // ✅ ahora apunta a pasMas
+  params: {
+    skip,
+    limit: limite,
+    search: busqueda.value || undefined,
+  },
+});
 
-    // Filtrado
-    let filtrados = pacientesConCliente.filter(p =>
-      p.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) ||
-      `${p.cliente_nombre} ${p.cliente_apellido}`.toLowerCase().includes(busqueda.value.toLowerCase())
-    );
 
-    total.value = filtrados.length;
-
-    // Paginación
-    const inicio = (pagina.value - 1) * limite;
-    pacientes.value = filtrados.slice(inicio, inicio + limite);
+    pacientes.value = res.items;
+    total.value = res.total;
 
   } catch (err) {
     console.error("Error cargando pacientes:", err);
     error.value = "Error al cargar pacientes";
     pacientes.value = [];
-  } finally {
-    cargando.value = false; // termina de cargar
   }
 };
+
 
 watch(busqueda, () => {
   pagina.value = 1; // reinicia a la primera página al cambiar búsqueda
