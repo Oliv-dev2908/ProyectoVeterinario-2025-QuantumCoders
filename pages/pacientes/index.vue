@@ -44,7 +44,7 @@
               <td class="p-3">{{ p.raza }}</td>
               <td class="p-3">{{ p.edad }}</td>
               <td class="p-3">{{ p.sexo ? 'Macho' : 'Hembra' }}</td>
-              <td class="p-3">{{ p.cliente?.nombre_completo || "Sin asignar"}}</td>
+              <td class="p-3">{{ p.cliente?.nombre_completo || "Sin asignar" }}</td>
               <td class="p-3 flex justify-center gap-2 flex-wrap">
                 <button @click="abrirModal(p)" class="text-green-600 hover:text-green-800 font-medium">
                   👁️ Ver
@@ -123,7 +123,11 @@
             <p><strong>Estado de salud:</strong> {{ pacienteSeleccionado.estado }}</p>
             <p><strong>Estado corporal:</strong> {{ pacienteSeleccionado.estado_corporal }}</p>
             <p><strong>Peso:</strong> {{ pacienteSeleccionado.peso }} kg</p>
-            <p><strong>Cliente:</strong> {{ p.cliente?.nombre_completo || "Sin asignar" }}</p>
+            <p>
+              <strong>Cliente:</strong>
+              {{ pacienteSeleccionado.cliente?.nombre_completo || "Sin asignar" }}
+            </p>
+
           </div>
 
           <!-- Acciones en el modal -->
@@ -209,12 +213,12 @@ const cargarPacientes = async () => {
     const skip = (pagina.value - 1) * limite;
 
     const res = await $fetch("/api/pacientes/pasMas", {  // ✅ ahora apunta a pasMas
-  params: {
-    skip,
-    limit: limite,
-    search: busqueda.value || undefined,
-  },
-});
+      params: {
+        skip,
+        limit: limite,
+        search: busqueda.value || undefined,
+      },
+    });
 
 
     pacientes.value = res.items;
@@ -235,10 +239,22 @@ watch(busqueda, () => {
 
 onMounted(cargarPacientes);
 
-const abrirModal = (paciente) => {
-  pacienteSeleccionado.value = paciente;
-  modalVisible.value = true;
+const abrirModal = async (paciente) => {
+  try {
+    cargando.value = true;
+
+    // 🔥 pedir el paciente completo
+    const data = await pacientesService.obtenerPaciente(paciente.id_paciente);
+
+    pacienteSeleccionado.value = data;
+    modalVisible.value = true;
+  } catch (error) {
+    console.error("Error cargando detalles del paciente", error);
+  } finally {
+    cargando.value = false;
+  }
 };
+
 
 const abrirModalConfirm = (paciente) => {
   pacienteSeleccionado.value = paciente
