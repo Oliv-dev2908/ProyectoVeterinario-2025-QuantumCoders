@@ -11,10 +11,8 @@
           </p>
         </div>
 
-        <NuxtLink
-          to="/consultas/nuevo"
-          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow hover:scale-105 transition"
-        >
+        <NuxtLink to="/consultas/nuevo"
+          class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-2.5 rounded-xl shadow hover:scale-105 transition">
           ➕ Nueva Consulta
         </NuxtLink>
       </div>
@@ -33,43 +31,34 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="c in consultas"
-              :key="`${c.id_paciente}-${c.fecha}`"
-              class="border-t hover:bg-teal-50 transition-all duration-200"
-            >
+            <tr v-for="c in consultas" :key="`${c.id_paciente}-${c.fecha}`"
+              class="border-t hover:bg-teal-50 transition-all duration-200">
               <td class="p-3 font-medium">{{ c.nombre_paciente }}</td>
               <td class="p-3">{{ c.nombre_usuario }}</td>
               <td class="p-3">{{ c.motivo }}</td>
               <td class="p-3">
-                {{ new Date(c.fecha).toLocaleDateString( { year: 'numeric', month: 'short', day: 'numeric' }) }}
+                {{ new Date(c.fecha).toLocaleDateString({ year: 'numeric', month: 'short', day: 'numeric' }) }}
               </td>
               <td class="p-3">
                 <span v-if="c.fechaproxconsulta">
-                  {{ new Date(c.fechaproxconsulta).toLocaleDateString( { year: 'numeric', month: 'short', day: 'numeric' }) }}
+                  {{ new Date(c.fechaproxconsulta).toLocaleDateString({
+                    year: 'numeric', month: 'short', day: 'numeric'
+                  }) }}
                 </span>
                 <span v-else>—</span>
               </td>
 
               <td class="p-3 flex justify-center gap-3">
-                <button
-                  @click="verDetalles(c)"
-                  class="text-green-600 hover:text-green-800 font-medium"
-                >
+                <button @click="verDetalles(c)" class="text-green-600 hover:text-green-800 font-medium">
                   👁️ Ver
                 </button>
-                <NuxtLink
-                  :to="`/consultas/${c.id_consulta}`"
-                  class="text-blue-600 hover:text-blue-800 font-medium"
-                >
+                <NuxtLink :to="`/consultas/${c.id_consulta}`" class="text-blue-600 hover:text-blue-800 font-medium">
                   ✏️ Editar
                 </NuxtLink>
-                <button
-                  @click="eliminar(c.id_paciente, c.fecha)"
-                  class="text-red-500 hover:text-red-700 font-medium"
-                >
+                <button @click="eliminar(c.id_consulta)" class="text-red-500 hover:text-red-700 font-medium">
                   🗑️ Eliminar
                 </button>
+
               </td>
             </tr>
 
@@ -84,17 +73,9 @@
     </div>
 
     <!-- 💬 Modal de detalles -->
-    <div
-      v-if="modalVisible"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
-      <div
-        class="bg-white p-6 rounded-2xl shadow-2xl max-w-lg w-full relative animate-fade-in"
-      >
-        <button
-          @click="modalVisible = false"
-          class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-        >
+    <div v-if="modalVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-lg w-full relative animate-fade-in">
+        <button @click="modalVisible = false" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
           ✖
         </button>
 
@@ -167,16 +148,16 @@ onMounted(async () => {
   })
 })
 
-const eliminar = async (id_paciente, fecha) => {
+const eliminar = async (id_consulta) => {
   if (!confirm("¿Seguro que deseas eliminar esta consulta?")) return
-  await $fetch(`/api/consultas/${id_paciente}`, {
-    method: "DELETE",
-    body: { fecha },
+
+  await $fetch(`/api/consultas/${id_consulta}`, {
+    method: "DELETE"
   })
-  consultas.value = consultas.value.filter(
-    (c) => !(c.id_paciente === id_paciente && c.fecha === fecha)
-  )
+
+  consultas.value = consultas.value.filter(c => c.id_consulta !== id_consulta)
 }
+
 </script>
 
 <style scoped>
@@ -185,11 +166,13 @@ const eliminar = async (id_paciente, fecha) => {
     opacity: 0;
     transform: translateY(5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 .animate-fade-in {
   animation: fade-in 0.3s ease-in-out;
 }
