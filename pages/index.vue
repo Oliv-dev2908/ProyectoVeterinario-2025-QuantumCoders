@@ -54,6 +54,17 @@
       <div v-if="catboostVisual" class="w-full bg-white p-6 rounded-3xl shadow-lg flex justify-center">
         <img :src="catboostVisual" alt="CatBoost Feature Importance" class="rounded-xl shadow-lg max-w-full" />
       </div>
+
+      <!-- Gráfico: Campana de Gauss -->
+      <div v-if="mlAnalysis" class="w-full bg-white p-6 rounded-3xl shadow-lg flex justify-center">
+        <canvas id="gaussianChart" class="max-w-full"></canvas>
+      </div>
+
+      <!-- Gráfico: Histograma -->
+      <div v-if="mlAnalysis" class="w-full bg-white p-6 rounded-3xl shadow-lg flex justify-center">
+        <canvas id="histogram"></canvas>
+      </div>
+
     </div>
   </div>
 </template>
@@ -100,16 +111,25 @@ onMounted(async () => {
     const res2 = await fetch('/api/machine2')
     const data2 = await res2.json()
     mlAnalysis.value = data2
-
-    const probs = mlAnalysis.value.predictions.map(p => p.prob_abandono)
-    await nextTick()
-    createHistogram(probs)
   } catch (error) {
     console.error('Error al cargar ML:', error)
   } finally {
     loading.value = false
   }
+
+  // Esperar a que vue pinte los canvas
+  await nextTick()
+
+  // Si no hay ML, no intentes graficar
+  if (!mlAnalysis.value) return
+
+  const probs = mlAnalysis.value.predictions.map(p => p.prob_abandono)
+
+  // Crear ambos gráficos SOLO UNA VEZ
+  createHistogram(probs)
+  createGaussianCurve(probs)
 })
+
 
 function createHistogram(values) {
   // Dividir en 20 bins por ejemplo
@@ -150,4 +170,65 @@ function createHistogram(values) {
     }
   })
 }
+
+function createGaussianCurve(values) {
+  // Cálculo de media y desviación estándar
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length
+  const stdDev = Math.sqrt(variance)
+
+  // Generar puntos sobre el eje X entre 0 y 1
+  const xPoints = []
+  const yPoints = []
+  const steps = 200
+
+  for (let i = 0; i <= steps; i++) {
+    const x = i / steps
+    const y = (1 / (stdDev * Math.sqrt(2 * Math.PI))) *
+      Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2))
+    xPoints.push(x)
+    yPoints.push(y)
+  }
+
+  const ctx = document.getElementById("gaussianChart").getContext("2d")
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: xPoints,
+      datasets: [
+        {
+          label: "Campana de Gauss",
+          data: yPoints,
+          fill: false,
+          borderColor: "rgba(59, 130, 246, 1)", // azul
+          tension: 0.2,
+          borderWidth: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: "Curva Normal de Probabilidad de Abandono"
+        },
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Probabilidad" },
+          min: 0,
+          max: 1
+        },
+        y: {
+          title: { display: true, text: "Densidad" },
+          beginAtZero: true
+        }
+      }
+    }
+  })
+}
+
 </script>

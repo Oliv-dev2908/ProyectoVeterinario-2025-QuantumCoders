@@ -29,6 +29,7 @@
               <th class="p-3">Nombre</th>
               <th class="p-3">Teléfono</th>
               <th class="p-3">Dirección</th>
+              <th class="p-3">Abandono</th>
               <th class="p-3 text-center">Acciones</th>
             </tr>
           </thead>
@@ -37,6 +38,16 @@
               <td class="p-3 font-medium">{{ c.nombres }} {{ c.apellidos }}</td>
               <td class="p-3">{{ c.telefono || '—' }}</td>
               <td class="p-3">{{ c.zona }}, {{ c.calle }} #{{ c.numero }}</td>
+              <td class="p-3">
+                <span v-if="c.prob_abandono !== null" :class="{
+                  'text-green-600 font-bold': c.prob_abandono < 0.15,
+                  'text-yellow-600 font-bold': c.prob_abandono >= 0.15 && c.prob_abandono < 0.35,
+                  'text-red-600 font-bold': c.prob_abandono >= 0.35
+                }">
+                  {{ (c.prob_abandono * 100).toFixed(1) }}%
+                </span>
+                <span v-else>—</span>
+              </td>
 
               <td class="p-3 flex justify-center gap-3">
                 <button @click="abrirModal(c)" class="text-blue-600 hover:text-blue-800 font-medium">
@@ -111,11 +122,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch} from "vue";
+import { ref, onMounted, watch } from "vue";
 import { clientesService } from "~/server/services/clientesService";
 
 const clientes = ref([]);
 const error = ref("");
+const predicciones = ref([]);
+
 
 const modalVisible = ref(false);
 const clienteSeleccionado = ref({});
@@ -129,20 +142,38 @@ const busqueda = ref("");
 
 const cargarClientes = async () => {
   try {
-    let res = await $fetch("/api/clientes"); // todos los clientes
-    let filtrados = res.filter(c =>
+    // 👉 Obtener clientes
+    let res = await $fetch("/api/clientes");
+
+    // 👉 Obtener predicciones del modelo
+    let respPred = await $fetch("/api/machine2");
+    predicciones.value = respPred.predictions;
+
+    // 👉 Mezclar datos: agregar prob_abandono a cada cliente
+    const clientesConProb = res.map(c => {
+      const pred = predicciones.value.find(p => p.id_cliente === c.id_cliente);
+      return {
+        ...c,
+        prob_abandono: pred ? pred.prob_abandono : null
+      };
+    });
+
+    // 👉 Aplicar búsqueda
+    let filtrados = clientesConProb.filter(c =>
       `${c.nombres} ${c.apellidos}`.toLowerCase().includes(busqueda.value.toLowerCase())
     );
 
     total.value = filtrados.length;
 
-    // Paginación
+    // 👉 Paginación
     const inicio = (pagina.value - 1) * limite;
     clientes.value = filtrados.slice(inicio, inicio + limite);
+
   } catch (e) {
     error.value = "Error al cargar clientes";
   }
 };
+
 
 
 watch(busqueda, () => {
